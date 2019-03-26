@@ -3,11 +3,9 @@
 # license that can be found in the LICENSE file.
 runtime: go111
 
-handlers:
-# Configure App Engine to serve any static assets.
-- url: /map
-  static_dir: static
+service: geoarray
 
+handlers:
 # Use HTTPS for all requests.
 - url: /.*
   secure: always
