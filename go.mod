@@ -1,4 +1,4 @@
-module source.cloud.google.com/wald-1526877012527/cloud_wms
+module github.com/prl900/ae_wms/tree/geo_array
 
 require (
 	cloud.google.com/go v0.35.1

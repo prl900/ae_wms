@@ -19,8 +19,6 @@ import (
 
 const (
 	bucketName = "wald-1526877012527.appspot.com"
-	//webMerc    = "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs"
-	webMerc    = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs "
 	sinuProj   = "+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs "
 
 	ModistileName = "modis_arr/MCD43A4.A2018001.h%02dv%02d.006_b%d"
@@ -47,11 +45,11 @@ func getHeight(a, b ModisTileID) int {
 	return (b.Vertical-a.Vertical)
 }
 
-func ListModisTileIDs(bbox geometry.BoundingBox, geog bool) []ModisTileID {
+func ListModisTileIDs(bbox geometry.BoundingBox, proj4 string, geog bool) []ModisTileID {
 	pts := []geometry.Point{{bbox.Min.X, bbox.Min.Y}, {bbox.Max.X, bbox.Max.Y}}
 
 	if !geog {
-		proj4go.Inverse(webMerc, pts)
+		proj4go.Inverse(proj4, pts)
 	}
 
 	proj4go.Forwards(sinuProj, pts)
@@ -101,12 +99,12 @@ func ReadModisTile(tile ModisTileID, date time.Time) (*scimage.GrayU8, error) {
 	return &scimage.GrayU8{Pix: g8.Pix, Stride: XSize, Rect: image.Rect(0, 0, XSize, XSize), Min: 1, Max: 255, NoData: 0}, nil
 }
 
-func GenerateModisTile(width, height int, bbox geometry.BoundingBox, date time.Time)  ([]uint8, error) {
+func GenerateModisTile(width, height int, bbox geometry.BoundingBox, date time.Time, proj4 string)  ([]uint8, error) {
 	img := scimage.NewGrayU8(image.Rect(0, 0, width, height), 1, 255, 0)
-	rMerc := &raster.Raster{Image: img, Coverage: proj4go.Coverage{BoundingBox: bbox, Proj4: webMerc}}
+	rMerc := &raster.Raster{Image: img, Coverage: proj4go.Coverage{BoundingBox: bbox, Proj4: proj4}}
 	fmt.Println("target bbox ", bbox)
 
-	tiles := ListModisTileIDs(bbox, false)
+	tiles := ListModisTileIDs(bbox, proj4, false)
 	fmt.Println("AAAA", tiles)
 
 	var err error
