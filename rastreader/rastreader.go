@@ -102,25 +102,22 @@ func ReadModisTile(tile ModisTileID, date time.Time) (*scimage.GrayU8, error) {
 func GenerateModisTile(width, height int, bbox geometry.BoundingBox, date time.Time, proj4 string)  ([]uint8, error) {
 	img := scimage.NewGrayU8(image.Rect(0, 0, width, height), 1, 255, 0)
 	rMerc := &raster.Raster{Image: img, Coverage: proj4go.Coverage{BoundingBox: bbox, Proj4: proj4}}
-	fmt.Println("target bbox ", bbox)
 
 	tiles := ListModisTileIDs(bbox, proj4, false)
-	fmt.Println("AAAA", tiles)
 
 	var err error
 	for _, tile := range tiles {
-		fmt.Println("B", tile)
 		rIn := GetModisInfo(tile)
 		rIn.Image, err = ReadModisTile(tile, date)
 		if err != nil {
 			fmt.Println("Error!", err)
 			continue
 		}
-		fmt.Println("B", rIn.Image.(*scimage.GrayU8).Pix[0:24])
 
 		err := rMerc.Warp(rIn)
-		fmt.Println(err)
-		fmt.Println("----", img.Pix[0:100])
+		if err != nil {
+			return nil, err
+		}
 
 	}
 
