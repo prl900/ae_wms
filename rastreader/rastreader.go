@@ -21,7 +21,7 @@ const (
 	bucketName = "wald-1526877012527.appspot.com"
 	sinuProj   = "+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs "
 
-	ModistileName = "modis_arr/MCD43A4.A2018001.h%02dv%02d.006_b%d"
+	ModistileName = "modis_arr/MCD43A4.A2018001.h%02dv%02d.006_b%s"
 	xExtentModis  = 1111950.519666
 	yExtentModis  = 1111950.519667
 	XSize = 2400
@@ -77,7 +77,7 @@ func GetModisInfo(tile ModisTileID) *raster.Raster {
 		proj4go.Coverage{Proj4: sinuProj, BoundingBox: geometry.BBox(x0, y0, x1, y1)}}
 }
 
-func ReadModisTile(tile ModisTileID, date time.Time) (*scimage.GrayU8, error) {
+func ReadModisTile(tile ModisTileID, date time.Time, band string) (*scimage.GrayU8, error) {
 	ctx := context.Background()
 	client, err := storage.NewClient(ctx)
 	if err != nil {
@@ -87,7 +87,7 @@ func ReadModisTile(tile ModisTileID, date time.Time) (*scimage.GrayU8, error) {
 
 	// Add bands parameters
 	//objName := fmt.Sprintf(ModistileName, tile.Horizontal, tile.Vertical, 2, date.Format("2006.01.02"))
-	objName := fmt.Sprintf(ModistileName, tile.Horizontal, tile.Vertical, 2)
+	objName := fmt.Sprintf(ModistileName, tile.Horizontal, tile.Vertical, band)
 	r, err := bkt.Object(objName).NewReader(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("Error creating object reader: %s object: %s: %v", bucketName, objName, err)
@@ -99,7 +99,7 @@ func ReadModisTile(tile ModisTileID, date time.Time) (*scimage.GrayU8, error) {
 	return &scimage.GrayU8{Pix: g8.Pix, Stride: XSize, Rect: image.Rect(0, 0, XSize, XSize), Min: 1, Max: 255, NoData: 0}, nil
 }
 
-func GenerateModisTile(width, height int, bbox geometry.BoundingBox, date time.Time, proj4 string)  ([]uint8, error) {
+func GenerateModisTile(width, height int, bbox geometry.BoundingBox, date time.Time, band, proj4 string)  ([]uint8, error) {
 	img := scimage.NewGrayU8(image.Rect(0, 0, width, height), 1, 255, 0)
 	rMerc := &raster.Raster{Image: img, Coverage: proj4go.Coverage{BoundingBox: bbox, Proj4: proj4}}
 
@@ -108,7 +108,7 @@ func GenerateModisTile(width, height int, bbox geometry.BoundingBox, date time.T
 	var err error
 	for _, tile := range tiles {
 		rIn := GetModisInfo(tile)
-		rIn.Image, err = ReadModisTile(tile, date)
+		rIn.Image, err = ReadModisTile(tile, date, band)
 		if err != nil {
 			fmt.Println("Error!", err)
 			continue
