@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 	"time"
 	"strconv"
 	"strings"
@@ -57,7 +58,7 @@ func wms(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	
+
 	var d time.Time
 	out, err := rastreader.GenerateModisTile(int(width), int(height), bbox, d, params["band"][0], wgs84)
         if err != nil {
@@ -70,5 +71,5 @@ func wms(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	http.HandleFunc("/geoarray", wms)
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", os.Getenv("PORT")), nil))
 }
