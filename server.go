@@ -41,10 +41,6 @@ func wms(w http.ResponseWriter, r *http.Request) {
 	}
 
 	bbox := geometry.BBox(pts[0], pts[1], pts[2], pts[3])
-	if bbox.Area() > 400 {
-		http.Error(w, fmt.Sprintf("Too big area: %f", bbox.Area()), 413)
-		return
-	}
 
 	width, err := strconv.ParseInt(params["width"][0], 10, 64)
 	if err != nil {
@@ -58,9 +54,27 @@ func wms(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var proj4 string
+	switch params["srs"][0] {
+	case "EPSG:4326":
+		proj4 = wgs84
+		if bbox.Area() > 400 {
+			http.Error(w, fmt.Sprintf("Too big area: %f", bbox.Area()), 413)
+			return
+		}
+	case "EPSG:3857":
+		proj4 = webMerc
+		if bbox.Area() > 20000000*20000000 {
+			http.Error(w, fmt.Sprintf("Too big area: %f", bbox.Area()), 413)
+			return
+		}
+	default:
+		http.Error(w, "Unrecognised srs value", 400)
+		return
+	}
 
 	var d time.Time
-	out, err := rastreader.GenerateModisTile(int(width), int(height), bbox, d, params["band"][0], wgs84)
+	out, err := rastreader.GenerateModisTile(int(width), int(height), bbox, d, params["band"][0], proj4)
         if err != nil {
 		http.Error(w, fmt.Sprintf("Error reading from object: %v", err), 400)
                 return
