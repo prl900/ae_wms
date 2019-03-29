@@ -21,14 +21,14 @@ const (
 	bucketName = "wald-1526877012527.appspot.com"
 	sinuProj   = "+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs "
 
-	ModistileName = "modis_arr/MCD43A4.A2018001.h%02dv%02d.006_b%s"
-	Modis4tileName = "modis_arr/MCD43A4.A2018001.h%02dv%02d.006_b%s_%d"
-	xExtentModis  = 1111950.519666
-	yExtentModis  = 1111950.519667
-	XSize = 2400
-	YSize = 2400
-	X4Size = 1200
-	Y4Size = 1200
+	ModistileName  = "modis_arr/MCD43A4.A2018001.h%02dv%02d.006_b%s"
+	Modis4tileName = "modis_arr/MCD43A4.A2018001.h%02dv%02d.006_b%s_%02d"
+	xExtentModis   = 1111950.519666
+	yExtentModis   = 1111950.519667
+	XSize          = 2400
+	YSize          = 2400
+	X4Size         = 1200
+	Y4Size         = 1200
 )
 
 // -------------------------- 2400 --------------------------
@@ -94,20 +94,20 @@ func ReadModis4Tile(tile Modis4TileID, date time.Time, band string) (*scimage.Gr
 	bkt := client.Bucket(bucketName)
 
 	// Add bands parameters
-	//objName := fmt.Sprintf(ModistileName, tile.Horizontal, tile.Vertical, 2, date.Format("2006.01.02"))
-	objName := fmt.Sprintf(ModistileName, tile.Horizontal, tile.Vertical, band, tile.SeqV*10+tile.SeqH)
+	//objName := fmt.Sprintf(Modis4tileName, tile.Horizontal, tile.Vertical, 2, date.Format("2006.01.02"))
+	objName := fmt.Sprintf(Modis4tileName, tile.Horizontal, tile.Vertical, band, tile.SeqV*10+tile.SeqH)
 	r, err := bkt.Object(objName).NewReader(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("Error creating object reader: %s object: %s: %v", bucketName, objName, err)
 	}
 
 	img, err := png.Decode(r)
-        g8 := img.(*image.Gray)
+	g8 := img.(*image.Gray)
 
 	return &scimage.GrayU8{Pix: g8.Pix, Stride: XSize, Rect: image.Rect(0, 0, XSize, XSize), Min: 1, Max: 255, NoData: 0}, nil
 }
 
-func GenerateModis4Tile(width, height int, bbox geometry.BoundingBox, date time.Time, band, proj4 string)  ([]uint8, error) {
+func GenerateModis4Tile(width, height int, bbox geometry.BoundingBox, date time.Time, band, proj4 string) ([]uint8, error) {
 	img := scimage.NewGrayU8(image.Rect(0, 0, width, height), 1, 255, 0)
 	rMerc := &raster.Raster{Image: img, Coverage: proj4go.Coverage{BoundingBox: bbox, Proj4: proj4}}
 
@@ -144,11 +144,11 @@ func xy2tile(x, y float64) ModisTileID {
 }
 
 func getWidth(a, b ModisTileID) int {
-	return (b.Horizontal-a.Horizontal)
+	return (b.Horizontal - a.Horizontal)
 }
 
 func getHeight(a, b ModisTileID) int {
-	return (b.Vertical-a.Vertical)
+	return (b.Vertical - a.Vertical)
 }
 
 func ListModisTileIDs(bbox geometry.BoundingBox, proj4 string, geog bool) []ModisTileID {
@@ -174,9 +174,9 @@ func ListModisTileIDs(bbox geometry.BoundingBox, proj4 string, geog bool) []Modi
 }
 
 func GetModisInfo(tile ModisTileID) *raster.Raster {
-	x0 := float64(tile.Horizontal-18)*xExtentModis
+	x0 := float64(tile.Horizontal-18) * xExtentModis
 	x1 := x0 + xExtentModis
-	y1 := float64(9-tile.Vertical)*yExtentModis
+	y1 := float64(9-tile.Vertical) * yExtentModis
 	y0 := y1 - yExtentModis
 
 	return &raster.Raster{scimage.NewBlankImage(scicolor.GrayU8Model{1, 255, 0}, image.Rect(0, 0, XSize, YSize)),
@@ -200,12 +200,12 @@ func ReadModisTile(tile ModisTileID, date time.Time, band string) (*scimage.Gray
 	}
 
 	img, err := png.Decode(r)
-        g8 := img.(*image.Gray)
+	g8 := img.(*image.Gray)
 
 	return &scimage.GrayU8{Pix: g8.Pix, Stride: XSize, Rect: image.Rect(0, 0, XSize, XSize), Min: 1, Max: 255, NoData: 0}, nil
 }
 
-func GenerateModisTile(width, height int, bbox geometry.BoundingBox, date time.Time, band, proj4 string)  ([]uint8, error) {
+func GenerateModisTile(width, height int, bbox geometry.BoundingBox, date time.Time, band, proj4 string) ([]uint8, error) {
 	img := scimage.NewGrayU8(image.Rect(0, 0, width, height), 1, 255, 0)
 	rMerc := &raster.Raster{Image: img, Coverage: proj4go.Coverage{BoundingBox: bbox, Proj4: proj4}}
 

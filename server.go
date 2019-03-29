@@ -3,19 +3,19 @@ package main
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"os"
-	"time"
 	"strconv"
 	"strings"
-	"net/http"
+	"time"
 
-	"github.com/terrascope/geometry"
 	"github.com/prl900/ae_wms/tree/geo_array/rastreader"
+	"github.com/terrascope/geometry"
 )
 
 const (
-        webMerc = "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs"
-        wgs84   = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs "
+	webMerc = "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs"
+	wgs84   = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs "
 )
 
 func wms(w http.ResponseWriter, r *http.Request) {
@@ -76,10 +76,10 @@ func wms(w http.ResponseWriter, r *http.Request) {
 	var d time.Time
 	//*out, err := rastreader.GenerateModisTile(int(width), int(height), bbox, d, params["band"][0], proj4)
 	out, err := rastreader.GenerateModis4Tile(int(width), int(height), bbox, d, params["band"][0], proj4)
-        if err != nil {
+	if err != nil {
 		http.Error(w, fmt.Sprintf("Error reading from object: %v", err), 400)
-                return
-        }
+		return
+	}
 
 	fmt.Fprintf(w, "%s", out)
 }
