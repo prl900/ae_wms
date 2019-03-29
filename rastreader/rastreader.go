@@ -22,6 +22,7 @@ const (
 	sinuProj   = "+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs "
 
 	ModistileName = "modis_arr/MCD43A4.A2018001.h%02dv%02d.006_b%s"
+	Modis4tileName = "modis_arr/MCD43A4.A2018001.h%02dv%02d.006_b%s_%d%d"
 	xExtentModis  = 1111950.519666
 	yExtentModis  = 1111950.519667
 	XSize = 2400
