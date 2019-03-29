@@ -42,7 +42,7 @@ type Modis4TileID struct {
 
 func xy24tile(x, y float64) Modis4TileID {
 	return Modis4TileID{Horizontal: int(math.Floor(x/xExtentModis)) + 18, Vertical: -1*int(math.Ceil(y/yExtentModis)) + 9,
-		SeqH: int((math.Mod(x, xExtentModis) / xExtentModis) * 2), SeqV: int((-1 * (math.Mod(y, yExtentModis) / yExtentModis)) * 2)}
+		SeqH: int((math.Mod(x, xExtentModis) / xExtentModis) * 2), SeqV: int((math.Mod(y, yExtentModis) / yExtentModis) * 2)}
 }
 
 func get4Width(a, b Modis4TileID) int {
@@ -61,9 +61,11 @@ func ListModis4TileIDs(bbox geometry.BoundingBox, proj4 string, geog bool) []Mod
 	}
 
 	proj4go.Forwards(sinuProj, pts)
+	//fmt.Println("Sinu BBOX", pts)
 
 	tlTile := xy24tile(pts[0].X, pts[1].Y)
 	brTile := xy24tile(pts[1].X, pts[0].Y)
+	//fmt.Println("Corner tiles", tlTile, brTile)
 
 	seqs := []Modis4TileID{}
 	for j := 0; j <= get4Height(tlTile, brTile); j++ {
@@ -112,7 +114,8 @@ func GenerateModis4Tile(width, height int, bbox geometry.BoundingBox, date time.
 	rMerc := &raster.Raster{Image: img, Coverage: proj4go.Coverage{BoundingBox: bbox, Proj4: proj4}}
 
 	tiles := ListModis4TileIDs(bbox, proj4, false)
-
+	//fmt.Println("Tiles:", tiles)
+	return nil, nil
 	var err error
 	for _, tile := range tiles {
 		rIn := GetModis4Info(tile)
