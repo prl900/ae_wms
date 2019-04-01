@@ -106,7 +106,7 @@ func ReadModis4Tile(tile Modis4TileID, date time.Time, band string) (*scimage.Gr
 	img, err := png.Decode(r)
 	g8 := img.(*image.Gray)
 
-	return &scimage.GrayU8{Pix: g8.Pix, Stride: XSize, Rect: image.Rect(0, 0, XSize, XSize), Min: 1, Max: 255, NoData: 0}, nil
+	return &scimage.GrayU8{Pix: g8.Pix, Stride: X4Size, Rect: image.Rect(0, 0, X4Size, X4Size), Min: 1, Max: 255, NoData: 0}, nil
 }
 
 func GenerateModis4Tile(width, height int, bbox geometry.BoundingBox, date time.Time, band, proj4 string) ([]uint8, error) {
@@ -115,7 +115,6 @@ func GenerateModis4Tile(width, height int, bbox geometry.BoundingBox, date time.
 
 	tiles := ListModis4TileIDs(bbox, proj4, false)
 	//fmt.Println("Tiles:", tiles)
-	return nil, nil
 	var err error
 	for _, tile := range tiles {
 		rIn := GetModis4Info(tile)

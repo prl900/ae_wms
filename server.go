@@ -74,7 +74,7 @@ func wms(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var d time.Time
-	//*out, err := rastreader.GenerateModisTile(int(width), int(height), bbox, d, params["band"][0], proj4)
+	//out, err := rastreader.GenerateModisTile(int(width), int(height), bbox, d, params["band"][0], proj4)
 	out, err := rastreader.GenerateModis4Tile(int(width), int(height), bbox, d, params["band"][0], proj4)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error reading from object: %v", err), 400)
