@@ -1,5 +1,9 @@
 Flask==1.0.2
-numpy==1.15.4
-numexpr==2.6.9
 matplotlib==3.0.2
-tensorflow
+numpy==1.15.4
+#numexpr==2.6.9
+pyproj==2.1.2
+google-cloud-storage
+imageio
+#tensorly
+#tensorflow
