@@ -23,17 +23,18 @@ sinu_proj = "+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +un
 wgs84_proj = "epsg:4326"
 modis_pixel_size = (463.312716527916507, 463.312716527916677)
 modis_tile = "MCD43A4.A2018001.h%02dv%02d.006_b%d_16"
+modis_tile_size = 2400
 
 def xy2ij(origin, pixel_size, x, y):
     i = round((x - origin[0]) / pixel_size[0])
-    j = round((y - origin[1]) / pixel_size[1])
+    j = round((origin[1] - y) / pixel_size[1])
     
     return i, j
     
     
 def get_partial_tile(bbox, b, h, v, im_size=256, proj=wgs84_proj):
     # bbox contains [min_lon, min_lat, max_lon, max_lat]
-    pixel_size = ((bbox[2] - bbox[0]) / im_size, (bbox[1] - bbox[3]) / im_size)
+    pixel_size = ((bbox[2] - bbox[0]) / im_size, (bbox[3] - bbox[1]) / im_size)
 
     arr = np.zeros((im_size,im_size), dtype=np.uint16)
     
@@ -58,12 +59,12 @@ def get_partial_tile(bbox, b, h, v, im_size=256, proj=wgs84_proj):
 
     im = imageio.imread(f)
     
-    origin = ((h-18)*(modis_pixel_size[0]*2400), (9-v)*(modis_pixel_size[1]*2400))
+    origin = ((h-18)*modis_pixel_size[0]*modis_tile_size, (9-v)*modis_pixel_size[1]*modis_tile_size)
     for j in range(im_size):
         for i in range(im_size):
-            oi, oj = xy2ij(origin, pixel_size, xs[j*im_size+i], ys[j*im_size+i])
+            oi, oj = xy2ij(origin, modis_pixel_size, xs[j*im_size+i], ys[j*im_size+i])
 
-            if oi > 2399 or oj > 2399:
+            if oi > modis_tile_size - 1 or oj > modis_tile_size - 1:
                 arr[j,i] = 41248
                 continue
             if oi < 0 or oj < 0:
@@ -75,8 +76,8 @@ def get_partial_tile(bbox, b, h, v, im_size=256, proj=wgs84_proj):
 
 def bbox2tile(bbox, band, im_size, proj):
     pixel_size = (bbox[2] - bbox[0]) / im_size
-    modis_x_extent = modis_pixel_size[0]*2400
-    modis_y_extent = modis_pixel_size[1]*2400
+    modis_x_extent = modis_pixel_size[0]*modis_tile_size
+    modis_y_extent = modis_pixel_size[1]*modis_tile_size
     inProj = Proj(init=proj)
     outProj = Proj(sinu_proj)
  
