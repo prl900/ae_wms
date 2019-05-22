@@ -71,15 +71,18 @@ def get_partial_tile(bbox, b, h, v, im_size=256, proj=wgs84_proj):
     outProj = Proj(sinu_proj)
     xs, ys = transform(inProj, outProj, lons, lats)
     mylog += "    {}: calculating coordinates<br>".format(time.time() - start)
-    
+   
     # Instantiates a client
     start = time.time()
     blob = bucket.blob(modis_tile % (h, v, b))
     mylog += "       File: {}<br>".format(modis_tile % (h, v, b))
     mylog += "       {}: setting up storage<br>".format(time.time() - start)
-    f = io.BytesIO(blob.download_as_string())
-    f.seek(0)
-    mylog += "       {}: downloading image<br>".format(time.time() - start)
+    try:
+        f = io.BytesIO(blob.download_as_string())
+        f.seek(0)
+        mylog += "       {}: downloading image<br>".format(time.time() - start)
+    except:
+        return arr
 
     im = imageio.imread(f)
     mylog += "       {}: reading image<br>".format(time.time() - start)
@@ -200,7 +203,9 @@ def wms():
     
     width = int(request.args.get('width'))
     height = int(request.args.get('height'))
-    srs = request.args.get('srs')
+    srs = request.args.get('srs').lower()
+
+    #return "{} {} {} {}".format(bbox, width, height, srs)
     #styles = request.args.get('styles')
     #styles = "summer_r"
     styles = "RdYlGn"
@@ -228,7 +233,7 @@ def wms():
     #res = None
     out.seek(0)
     mylog += "{}: encoding tile<br>".format(time.time() - start)
-    return mylog
+    #return mylog
     return send_file(out, attachment_filename='tile.png', mimetype='image/png')
 
 """
