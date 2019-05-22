@@ -16,14 +16,34 @@ import os
 import io
 import matplotlib.pyplot as plt
 from google.cloud import storage
+import time
+
+"""
+import googlecloudprofiler
+
+# Profiler initialization. It starts a daemon thread which continuously
+# collects and uploads profiles. Best done as early as possible.
+try:
+    # service and service_version can be automatically inferred when
+    # running on App Engine. project_id must be set if not running
+    # on GCP.
+    googlecloudprofiler.start(verbose=3)
+except (ValueError, NotImplementedError) as exc:
+    print(exc)  # Handle errors here
+"""
 
 
-#tile_server = "https://geoarray-dot-wald-1526877012527.appspot.com/geoarray"
+
 sinu_proj = "+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs "
 wgs84_proj = "epsg:4326"
 modis_pixel_size = (463.312716527916507, 463.312716527916677)
 modis_tile = "MCD43A4.A2018001.h%02dv%02d.006_b%d_16"
 modis_tile_size = 2400
+
+mylog = "Welcome to the home made profiling stack:<br>"
+    
+storage_client = storage.Client()
+bucket = storage_client.get_bucket('tiny_map')
 
 def xy2ij(origin, pixel_size, x, y):
     i = round((x - origin[0]) / pixel_size[0])
@@ -33,11 +53,13 @@ def xy2ij(origin, pixel_size, x, y):
     
     
 def get_partial_tile(bbox, b, h, v, im_size=256, proj=wgs84_proj):
+    global mylog
     # bbox contains [min_lon, min_lat, max_lon, max_lat]
     pixel_size = ((bbox[2] - bbox[0]) / im_size, (bbox[3] - bbox[1]) / im_size)
 
     arr = np.zeros((im_size,im_size), dtype=np.uint16)
     
+    start = time.time()
     lons = []
     lats = []
     for j, lat in enumerate(np.arange(bbox[3], bbox[1], -pixel_size[1])):
@@ -48,17 +70,22 @@ def get_partial_tile(bbox, b, h, v, im_size=256, proj=wgs84_proj):
     inProj = Proj(init=proj)
     outProj = Proj(sinu_proj)
     xs, ys = transform(inProj, outProj, lons, lats)
+    mylog += "    {}: calculating coordinates<br>".format(time.time() - start)
     
     # Instantiates a client
-    storage_client = storage.Client()
-    bucket = storage_client.get_bucket('tiny_map')
+    start = time.time()
     blob = bucket.blob(modis_tile % (h, v, b))
-    data = blob.download_as_string()
-    f = io.BytesIO(data)
+    mylog += "       File: {}<br>".format(modis_tile % (h, v, b))
+    mylog += "       {}: setting up storage<br>".format(time.time() - start)
+    f = io.BytesIO(blob.download_as_string())
     f.seek(0)
+    mylog += "       {}: downloading image<br>".format(time.time() - start)
 
     im = imageio.imread(f)
+    mylog += "       {}: reading image<br>".format(time.time() - start)
+    mylog += "    {}: total image<br>".format(time.time() - start)
     
+    start = time.time()
     origin = ((h-18)*modis_pixel_size[0]*modis_tile_size, (9-v)*modis_pixel_size[1]*modis_tile_size)
     for j in range(im_size):
         for i in range(im_size):
@@ -71,6 +98,7 @@ def get_partial_tile(bbox, b, h, v, im_size=256, proj=wgs84_proj):
                 arr[j,i] = 41248
                 continue
             arr[j,i] = im[oj,oi]  
+    mylog += "    {}: reprojecting image<br>".format(time.time() - start)
             
     return arr
 
@@ -139,6 +167,8 @@ app = Flask(__name__)
 
 @app.route('/wms')
 def wms():
+    global mylog
+    start = time.time()
     service = request.args.get('service')
     if service != 'WMS':
         return "Malformed request: only WMS requests implemented", 400
@@ -167,10 +197,14 @@ def wms():
     srs = request.args.get('srs')
     #styles = request.args.get('styles')
     styles = "summer_r"
+    mylog += "{}: parsing fields<br>".format(time.time() - start)
+
     #nir = bbox2tile(bbox, 2, im_size, proj)
     #return bbox2tile(bbox, 1, width, srs)
+    start = time.time()
     red = bbox2tile(bbox, 1, width, srs)
-
+    mylog += "{}: creating tile<br>".format(time.time() - start)
+    #return "{} {}".format(red.shape, red.dtype)
     #nir = get_tile(bbox, width, height, 2, srs)
     #red = get_tile(bbox, width, height, 1, srs)
 
@@ -180,11 +214,13 @@ def wms():
     #res = tf_ndvi(red, nir)
     #red = None
     #nir = None
+    start = time.time()
     out = io.BytesIO()
     plt.imsave(out, red, cmap=styles, format="png")
     #res = None
     out.seek(0)
-
+    mylog += "{}: encoding tile<br>".format(time.time() - start)
+    return mylog
     return send_file(out, attachment_filename='tile.png', mimetype='image/png')
 
 @app.route('/proj')
