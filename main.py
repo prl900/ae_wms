@@ -125,8 +125,7 @@ def bbox2tile(bbox, band, im_size, proj):
     
     arr = None
     for h in range(min_h, max_h+1):
-        #for v in range(min_v, max_v+1):
-        for v in range(max_v, min_v-1, -1):
+        for v in range(min_v, max_v+1):
             mylog += " {}, {}: transform tile<br>".format(h, v)
             #return get_partial_tile(bbox, band, h, v, im_size, proj)
             a = get_partial_tile(bbox, band, h, v, im_size, proj)
