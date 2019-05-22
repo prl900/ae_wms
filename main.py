@@ -9,7 +9,7 @@ from pyproj import Proj, transform
 import imageio
 import numpy as np
 import math
-#import numexpr as ne
+import numexpr as ne
 #import tensorflow as tf
 import urllib
 import os
@@ -103,6 +103,7 @@ def get_partial_tile(bbox, b, h, v, im_size=256, proj=wgs84_proj):
     return arr
 
 def bbox2tile(bbox, band, im_size, proj):
+    global mylog
     pixel_size = (bbox[2] - bbox[0]) / im_size
     modis_x_extent = modis_pixel_size[0]*modis_tile_size
     modis_y_extent = modis_pixel_size[1]*modis_tile_size
@@ -110,16 +111,20 @@ def bbox2tile(bbox, band, im_size, proj):
     outProj = Proj(sinu_proj)
  
     x_tl, y_tl = transform(inProj, outProj, bbox[0], bbox[3])
+    x_tr, y_tr = transform(inProj, outProj, bbox[2], bbox[3])
     x_br, y_br = transform(inProj, outProj, bbox[2], bbox[1])
+    x_bl, y_bl = transform(inProj, outProj, bbox[0], bbox[1])
     
-    max_h = int(math.floor(x_tl/modis_x_extent)) + 18
-    min_h = int(math.floor(x_br/modis_x_extent)) + 18
-    min_v = -1*int(math.ceil(y_tl/modis_y_extent)) + 9
-    max_v = -1*int(math.ceil(y_br/modis_y_extent)) + 9
+    max_h = max(int(math.floor(x_tl/modis_x_extent)), int(math.floor(x_tr/modis_x_extent))) + 18
+    min_h = min(int(math.floor(x_br/modis_x_extent)), int(math.floor(x_bl/modis_x_extent))) + 18
+    min_v = min(-1*int(math.ceil(y_tl/modis_y_extent)), -1*int(math.ceil(y_bl/modis_y_extent))) + 9
+    max_v = max(-1*int(math.ceil(y_br/modis_y_extent)), -1*int(math.ceil(y_tr/modis_y_extent))) + 9
     
     arr = None
     for h in range(min_h, max_h+1):
-        for v in range(min_v, max_v+1):
+        #for v in range(min_v, max_v+1):
+        for v in range(max_v, min_v-1, -1):
+            mylog += " {}, {}: transform tile<br>".format(h, v)
             #return get_partial_tile(bbox, band, h, v, im_size, proj)
             a = get_partial_tile(bbox, band, h, v, im_size, proj)
             a[a == 41248] = 0
@@ -168,6 +173,7 @@ app = Flask(__name__)
 @app.route('/wms')
 def wms():
     global mylog
+    mylog = ''
     start = time.time()
     service = request.args.get('service')
     if service != 'WMS':
@@ -196,33 +202,36 @@ def wms():
     height = int(request.args.get('height'))
     srs = request.args.get('srs')
     #styles = request.args.get('styles')
-    styles = "summer_r"
+    #styles = "summer_r"
+    styles = "RdYlGn"
     mylog += "{}: parsing fields<br>".format(time.time() - start)
 
     #nir = bbox2tile(bbox, 2, im_size, proj)
     #return bbox2tile(bbox, 1, width, srs)
     start = time.time()
     red = bbox2tile(bbox, 1, width, srs)
+    nir = bbox2tile(bbox, 2, width, srs)
     mylog += "{}: creating tile<br>".format(time.time() - start)
     #return "{} {}".format(red.shape, red.dtype)
     #nir = get_tile(bbox, width, height, 2, srs)
     #red = get_tile(bbox, width, height, 1, srs)
 
-    #ndvi = "(nir - red) / (nir + red)"
-    #res = ne.evaluate(ndvi)
+    ndvi = "(nir - red) / (nir + red)"
+    res = ne.evaluate(ndvi)
     
     #res = tf_ndvi(red, nir)
     #red = None
     #nir = None
     start = time.time()
     out = io.BytesIO()
-    plt.imsave(out, red, cmap=styles, format="png")
+    plt.imsave(out, res, cmap=styles, format="png")
     #res = None
     out.seek(0)
     mylog += "{}: encoding tile<br>".format(time.time() - start)
     return mylog
     return send_file(out, attachment_filename='tile.png', mimetype='image/png')
 
+"""
 @app.route('/proj')
 def proj():
     inProj = Proj(init='epsg:3857')
@@ -230,6 +239,7 @@ def proj():
     x1,y1 = -11705274.6374,4826473.6922
     x2,y2 = transform(inProj,outProj,x1,y1)
     return "{} {}".format(x2, y2)
+"""
 
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=os.environ['PORT'], debug=True)
