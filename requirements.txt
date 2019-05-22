@@ -2,6 +2,7 @@ Flask==1.0.2
 matplotlib==3.0.2
 numpy==1.15.4
 pyproj==2.1.2
+numexpr==2.6.9
 google-cloud-storage
 google-cloud-profiler
 imageio

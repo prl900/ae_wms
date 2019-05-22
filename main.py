@@ -228,7 +228,7 @@ def wms():
     #nir = None
     start = time.time()
     out = io.BytesIO()
-    plt.imsave(out, res, cmap=styles, format="png")
+    plt.imsave(out, res, cmap=styles, vmin=0, vmax=1, format="png")
     #res = None
     out.seek(0)
     mylog += "{}: encoding tile<br>".format(time.time() - start)
