@@ -9,14 +9,17 @@ from pyproj import Proj, transform
 import imageio
 import numpy as np
 import math
-import numexpr as ne
+#import numexpr as ne
 #import tensorflow as tf
-import urllib
+#import urllib
 import os
 import io
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 from google.cloud import storage
-import time
+#import time
+#from PIL import Image
+
+from memory_profiler import profile
 
 """
 import googlecloudprofiler
@@ -40,10 +43,14 @@ modis_pixel_size = (463.312716527916507, 463.312716527916677)
 modis_tile = "MCD43A4.A2018001.h%02dv%02d.006_b%d_16"
 modis_tile_size = 2400
 
-mylog = "Welcome to the home made profiling stack:<br>"
-    
+#mylog = "Welcome to the home made profiling stack:<br>"
 storage_client = storage.Client()
 bucket = storage_client.get_bucket('tiny_map')
+
+@profile
+def init():
+    global bucket
+    storage_client = None
 
 def xy2ij(origin, pixel_size, x, y):
     i = round((x - origin[0]) / pixel_size[0])
@@ -53,13 +60,13 @@ def xy2ij(origin, pixel_size, x, y):
     
     
 def get_partial_tile(bbox, b, h, v, im_size=256, proj=wgs84_proj):
-    global mylog
+    #global mylog
     # bbox contains [min_lon, min_lat, max_lon, max_lat]
     pixel_size = ((bbox[2] - bbox[0]) / im_size, (bbox[3] - bbox[1]) / im_size)
 
     arr = np.zeros((im_size,im_size), dtype=np.uint16)
     
-    start = time.time()
+    #start = time.time()
     lons = []
     lats = []
     for j, lat in enumerate(np.arange(bbox[3], bbox[1], -pixel_size[1])):
@@ -70,25 +77,26 @@ def get_partial_tile(bbox, b, h, v, im_size=256, proj=wgs84_proj):
     inProj = Proj(init=proj)
     outProj = Proj(sinu_proj)
     xs, ys = transform(inProj, outProj, lons, lats)
-    mylog += "    {}: calculating coordinates<br>".format(time.time() - start)
+    #mylog += "    {}: calculating coordinates<br>".format(time.time() - start)
    
     # Instantiates a client
-    start = time.time()
+    #start = time.time()
     blob = bucket.blob(modis_tile % (h, v, b))
-    mylog += "       File: {}<br>".format(modis_tile % (h, v, b))
-    mylog += "       {}: setting up storage<br>".format(time.time() - start)
+    #mylog += "       File: {}<br>".format(modis_tile % (h, v, b))
+    #mylog += "       {}: setting up storage<br>".format(time.time() - start)
     try:
         f = io.BytesIO(blob.download_as_string())
         f.seek(0)
-        mylog += "       {}: downloading image<br>".format(time.time() - start)
+        #mylog += "       {}: downloading image<br>".format(time.time() - start)
     except:
         return arr
 
     im = imageio.imread(f)
-    mylog += "       {}: reading image<br>".format(time.time() - start)
-    mylog += "    {}: total image<br>".format(time.time() - start)
+    #im = np.zeros((2400,2400))
+    #mylog += "       {}: reading image<br>".format(time.time() - start)
+    #mylog += "    {}: total image<br>".format(time.time() - start)
     
-    start = time.time()
+    #start = time.time()
     origin = ((h-18)*modis_pixel_size[0]*modis_tile_size, (9-v)*modis_pixel_size[1]*modis_tile_size)
     for j in range(im_size):
         for i in range(im_size):
@@ -101,13 +109,17 @@ def get_partial_tile(bbox, b, h, v, im_size=256, proj=wgs84_proj):
                 arr[j,i] = 41248
                 continue
             arr[j,i] = im[oj,oi]  
-    mylog += "    {}: reprojecting image<br>".format(time.time() - start)
+    #mylog += "    {}: reprojecting image<br>".format(time.time() - start)
             
     return arr
 
 def bbox2tile(bbox, band, im_size, proj):
-    global mylog
+    #global mylog
     pixel_size = (bbox[2] - bbox[0]) / im_size
+    print("AAAA", pixel_size)
+    print("AAAA", im_size)
+    print("AAAA", im_size*(pixel_size/500))
+    print("AAAA", im_size*(pixel_size/500))
     modis_x_extent = modis_pixel_size[0]*modis_tile_size
     modis_y_extent = modis_pixel_size[1]*modis_tile_size
     inProj = Proj(init=proj)
@@ -126,7 +138,7 @@ def bbox2tile(bbox, band, im_size, proj):
     arr = None
     for h in range(min_h, max_h+1):
         for v in range(min_v, max_v+1):
-            mylog += " {}, {}: transform tile<br>".format(h, v)
+            #mylog += " {}, {}: transform tile<br>".format(h, v)
             #return get_partial_tile(bbox, band, h, v, im_size, proj)
             a = get_partial_tile(bbox, band, h, v, im_size, proj)
             a[a == 41248] = 0
@@ -173,10 +185,11 @@ def get_tile(bbox, x_size, y_size, band, srs):
 app = Flask(__name__)
 
 @app.route('/wms')
+@profile
 def wms():
-    global mylog
-    mylog = ''
-    start = time.time()
+    #global mylog
+    #mylog = ''
+    #start = time.time()
     service = request.args.get('service')
     if service != 'WMS':
         return "Malformed request: only WMS requests implemented", 400
@@ -208,30 +221,32 @@ def wms():
     #styles = request.args.get('styles')
     #styles = "summer_r"
     styles = "RdYlGn"
-    mylog += "{}: parsing fields<br>".format(time.time() - start)
+    #mylog += "{}: parsing fields<br>".format(time.time() - start)
 
     #nir = bbox2tile(bbox, 2, im_size, proj)
     #return bbox2tile(bbox, 1, width, srs)
-    start = time.time()
+    #start = time.time()
     red = bbox2tile(bbox, 1, width, srs)
     nir = bbox2tile(bbox, 2, width, srs)
-    mylog += "{}: creating tile<br>".format(time.time() - start)
+    #mylog += "{}: creating tile<br>".format(time.time() - start)
     #return "{} {}".format(red.shape, red.dtype)
     #nir = get_tile(bbox, width, height, 2, srs)
     #red = get_tile(bbox, width, height, 1, srs)
 
-    ndvi = "(nir - red) / (nir + red)"
-    res = ne.evaluate(ndvi)
+    #ndvi = "(nir - red) / (nir + red)"
+    #res = ne.evaluate(ndvi)
+    res = (nir - red) / (nir + red)
     
     #res = tf_ndvi(red, nir)
-    #red = None
-    #nir = None
-    start = time.time()
+    red = None
+    nir = None
+    #start = time.time()
     out = io.BytesIO()
-    plt.imsave(out, res, cmap=styles, vmin=0, vmax=1, format="png")
-    #res = None
+    #plt.imsave(out, res, cmap=styles, vmin=0, vmax=1, format="png")
+    imageio.imwrite(out, res, format='png') 
+    res = None
     out.seek(0)
-    mylog += "{}: encoding tile<br>".format(time.time() - start)
+    #mylog += "{}: encoding tile<br>".format(time.time() - start)
     #return mylog
     return send_file(out, attachment_filename='tile.png', mimetype='image/png')
 
@@ -246,4 +261,5 @@ def proj():
 """
 
 if __name__ == '__main__':
-    app.run(host='127.0.0.1', port=os.environ['PORT'], debug=True)
+    init()
+    app.run(host='127.0.0.1', port=os.environ['PORT'], debug=False)
