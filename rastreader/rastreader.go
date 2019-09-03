@@ -16,10 +16,8 @@ const (
 func GenerateTile(layer Layer, width, height int, bbox geometry.BoundingBox, date time.Time) (*image.Paletted, error) {
 
 	switch layer.Name {
-	case "ndvi" ,"cmrset":
-		return GenerateModisTile(layer, width, height, bbox, date)
-	case "e0":
-		return GenerateAwraTile(layer, width, height, bbox, date)
+	case "dea":
+		return GenerateDEATile(layer, width, height, bbox, date)
 
 	default:
 		return nil, fmt.Errorf("Layer not found")

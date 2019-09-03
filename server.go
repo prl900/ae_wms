@@ -12,12 +12,9 @@ import (
 	"text/template"
 	"time"
 
-	"source.cloud.google.com/wald-1526877012527/cloud_wms/rastreader"
-
 	"github.com/terrascope/geometry"
 
-	"cloud.google.com/go/storage"
-	"golang.org/x/net/context"
+	"./rastreader"
 )
 
 var md rastreader.Layers
@@ -92,7 +89,7 @@ func wms(w http.ResponseWriter, r *http.Request) {
 
 	paletted, err := rastreader.GenerateTile(md[layer], int(width), int(height), bbox, t)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Layer not found"), 400)
+		http.Error(w, fmt.Sprintf("Layer not found %v", err), 400)
 		return
 	}
 
@@ -120,41 +117,8 @@ func ExecuteWriteTemplateFile(w io.Writer, data interface{}, filePath string) er
 	return nil
 }
 
-func prof(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-
-	log.Printf("%s", r.URL)
-
-	params := r.URL.Query()
-	arr_name := params["arr"][0]
-
-	ctx := context.Background()
-	client, err := storage.NewClient(ctx)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Error creating client: %v", err), 400)
-		return
-	}
-	bkt := client.Bucket("wald-1526877012527.appspot.com")
-
-	rdr, err := bkt.Object(fmt.Sprintf("%s.npy", arr_name)).NewReader(ctx)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Error creating object reader: %v", err), 400)
-		return
-	}
-
-	_, err = ioutil.ReadAll(rdr)
-	rdr.Close()
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Error reading from object: %v", err), 400)
-		return
-	}
-
-	fmt.Fprintf(w, "Success")
-}
-
 func main() {
 	http.Handle("/", http.FileServer(http.Dir("./static")))
 	http.HandleFunc("/wms", wms)
-	http.HandleFunc("/prof", prof)
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatal(http.ListenAndServe(":8081", nil))
 }

@@ -2,8 +2,8 @@ package rastreader
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"image/color"
+	"io/ioutil"
 )
 
 type Layer struct {
@@ -21,7 +21,6 @@ type Layer struct {
 }
 
 type Layers map[string]Layer
-
 
 func ReadLayers(fileName string) (Layers, error) {
 	lyrs := Layers{}
