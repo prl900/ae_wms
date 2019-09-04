@@ -13,7 +13,7 @@ L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
     attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a>'
 }).addTo(map);
 
-var wmsUrl = "http://localhost:8081/wms"
+var wmsUrl = "https://dea-wms-dot-wald-1526877012527.appspot.com/wms"
 
 var deaLayer = L.tileLayer.wms(wmsUrl, {
     layers: 'dea',

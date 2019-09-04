@@ -1,9 +1,9 @@
 # Copyright 2018 Google Inc. All rights reserved.
 # Use of this source code is governed by the Apache 2.0
 # license that can be found in the LICENSE file.
-runtime: go111
+runtime: go112
 
-service: dea_wms
+service: dea-wms
 
 handlers:
 # Configure App Engine to serve any static assets.

@@ -12,9 +12,8 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/prl900/ae_wms/rastreader"
 	"github.com/terrascope/geometry"
-
-	"./rastreader"
 )
 
 var md rastreader.Layers
