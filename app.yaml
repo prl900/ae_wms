@@ -15,3 +15,7 @@ handlers:
   secure: always
   redirect_http_response_code: 301
   script: auto
+
+# Limit cost and study performance
+automatic_scaling:
+  max_instances: 1
