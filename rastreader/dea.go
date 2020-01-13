@@ -67,7 +67,7 @@ func GenerateDEATile(layer Layer, width, height int, bbox geometry.BoundingBox, 
 		bkt := client.Bucket(bucketName)
 	*/
 
-	img := scimage.NewGrayU8(image.Rect(0, 0, width, height), uint8(layer.MinVal), uint8(layer.MaxVal), uint8(layer.NoData))
+	img := scimage.NewGrayU8(image.Rect(0, 0, width, height), 0, 100, 255)
 	cov := proj4go.Coverage{BoundingBox: bbox, Proj4: webMerc}
 	rMerc := &raster.Raster{Image: img, Coverage: cov}
 
@@ -89,7 +89,7 @@ func GenerateDEATile(layer Layer, width, height int, bbox geometry.BoundingBox, 
 		}
 	*/
 	level = 3
-	tileStep := (1 << level) * 10
+	tileStep := (1 << level) // * 10
 	fmt.Println(tileStep)
 
 	covGDA94, err := cov.Transform(gda94)
@@ -112,14 +112,15 @@ func GenerateDEATile(layer Layer, width, height int, bbox geometry.BoundingBox, 
 	fmt.Println(minX, maxX, minY, maxY)
 	fmt.Println(x0, x1, y0, y1)
 
-	for x := x0; x < x1; x += tileStep {
-		for y := y0; y > y1; y -= tileStep {
-			tileCov := proj4go.Coverage{BoundingBox: geo.BBox(float64(x)*1e4, float64(y)*1e4, float64(x+tileStep)*1e4, float64(y-tileStep)*1e4), Proj4: gda94}
+	for x := x0; x <= x1; x += tileStep {
+		for y := y1; y >= y0; y -= tileStep {
+			tileCov := proj4go.Coverage{BoundingBox: geo.BBox(float64(x)*1e4, float64(y-tileStep)*1e4, float64(x+tileStep)*1e4, float64(y)*1e4), Proj4: gda94}
 			fmt.Printf(tileName, x, y, level)
 			fmt.Println()
 			fmt.Println(tileCov.BoundingBox)
 			fName := fmt.Sprintf(tileName, x, y, level)
 			if _, err := os.Stat(fName); err != nil {
+				fmt.Println("No")
 				continue
 			}
 
