@@ -14,8 +14,7 @@ import (
 
 	"github.com/prl900/ae_wms/rastreader"
 	"github.com/terrascope/geometry"
-
-	"cloud.google.com/go/profiler"
+	//"cloud.google.com/go/profiler"
 )
 
 var md rastreader.Layers
@@ -30,6 +29,7 @@ func init() {
 }
 
 func wms(w http.ResponseWriter, r *http.Request) {
+	log.Println("Received!")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 
 	log.Printf("%s", r.URL)
@@ -119,16 +119,18 @@ func ExecuteWriteTemplateFile(w io.Writer, data interface{}, filePath string) er
 }
 
 func main() {
-	// Profiler initialization, best done as early as possible.
-	if err := profiler.Start(profiler.Config{ProjectID: "wald-1526877012527", DebugLogging: true}); err != nil {
-		// Service and ServiceVersion can be automatically inferred when running
-		// on App Engine.
-		// ProjectID must be set if not running on GCP.
-		// ProjectID: "my-project",
-		log.Fatal(err)
-	}
+	/*
+		// Profiler initialization, best done as early as possible.
+		if err := profiler.Start(profiler.Config{ProjectID: "wald-1526877012527", DebugLogging: true}); err != nil {
+			// Service and ServiceVersion can be automatically inferred when running
+			// on App Engine.
+			// ProjectID must be set if not running on GCP.
+			// ProjectID: "my-project",
+			log.Fatal(err)
+		}*/
 
 	http.Handle("/", http.FileServer(http.Dir("./static")))
 	http.HandleFunc("/wms", wms)
+	log.Println("Ready!")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

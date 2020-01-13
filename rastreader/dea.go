@@ -3,67 +3,148 @@ package rastreader
 import (
 	"fmt"
 	"image"
-	"math"
-	//"os"
-	"log"
+	//"log"
+	//"math"
+	"io/ioutil"
+	"os"
 	"time"
 
+	"github.com/golang/snappy"
 	"github.com/terrascope/geometry"
 	geo "github.com/terrascope/geometry"
 	"github.com/terrascope/proj4go"
 	"github.com/terrascope/raster"
 	"github.com/terrascope/scimage"
-	"github.com/terrascope/scimage/cog"
 	"github.com/terrascope/scimage/scicolor"
-
-	"cloud.google.com/go/storage"
-	"golang.org/x/net/context"
+	//"cloud.google.com/go/storage"
+	//"golang.org/x/net/context"
 )
 
+// Lons: 41
+// [-19, -18, -17, -16, -15, -14, -13, -12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21]
+
+// Lats: 39
+// [-49, -48, -47, -46, -45, -44, -43, -42, -41, -40, -39, -38, -37, -36, -35, -34, -33, -32, -31, -30, -29, -28, -27, -26, -25, -24, -23, -22, -21, -20, -19, -18, -17, -16, -15, -14, -13, -12, -11]
+
 const (
-	tileName = "fc_metrics/fc_metrics_%02d_%02d_%s.tiff"
+	tileName = "/home/prl900/Downloads/dea_blobs/fc_metrics_maxPV_%+04d_%+04d_l%d_2001.snp"
 	gda94    = "+proj=aea +lat_1=-18 +lat_2=-36 +lat_0=0 +lon_0=132 +x_0=0 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs "
 )
 
-func GenerateDEATile(layer Layer, width, height int, bbox geometry.BoundingBox, date time.Time) (*image.Paletted, error) {
+func LocateTile(bbox geometry.BoundingBox, level int) []string {
 
-	ctx := context.Background()
-	client, err := storage.NewClient(ctx)
-	if err != nil {
-		log.Fatalf("Failed to create client: %v", err)
+	minX := int(bbox.Min.X / 1e4)
+	minY := int(bbox.Min.Y / 1e4)
+	maxX := int(bbox.Max.X / 1e4)
+	maxY := int(bbox.Max.Y / 1e4)
+	tileStep := (1 << level) * 10
+
+	x0 := (minX+190)/tileStep*tileStep - 190
+	x1 := (((maxX+190)/tileStep)+1)*tileStep - 190
+	y0 := (minY+110)/tileStep*tileStep - 110
+	y1 := (((maxY+110)/tileStep)-1)*tileStep - 110
+
+	fmt.Println(x0, x1, y0, y1)
+	files := []string{}
+
+	for x := x0; x <= x1; x += tileStep {
+		for y := y0; y >= y1; y -= tileStep {
+			files = append(files, fmt.Sprintf(tileName, x, y, level))
+		}
 	}
 
-	bkt := client.Bucket(bucketName)
+	return files
+}
+
+func GenerateDEATile(layer Layer, width, height int, bbox geometry.BoundingBox, date time.Time) (*image.Paletted, error) {
+	/*
+		ctx := context.Background()
+		client, err := storage.NewClient(ctx)
+		if err != nil {
+			log.Fatalf("Failed to create client: %v", err)
+		}
+
+		bkt := client.Bucket(bucketName)
+	*/
 
 	img := scimage.NewGrayU8(image.Rect(0, 0, width, height), uint8(layer.MinVal), uint8(layer.MaxVal), uint8(layer.NoData))
 	cov := proj4go.Coverage{BoundingBox: bbox, Proj4: webMerc}
 	rMerc := &raster.Raster{Image: img, Coverage: cov}
 
 	var level int
-	switch res := rMerc.Resolution()[0]; {
-	case res > 800:
-		level = 5
-	case res > 400:
-		level = 4
-	case res > 200:
-		level = 3
-	case res > 100:
-		level = 2
-	case res > 50:
-		level = 1
-	default:
-		level = 0
-	}
+	/*
+		switch res := rMerc.Resolution()[0]; {
+		case res > 800:
+			level = 5
+		case res > 400:
+			level = 4
+		case res > 200:
+			level = 3
+		case res > 100:
+			level = 2
+		case res > 50:
+			level = 1
+		default:
+			level = 0
+		}
+	*/
+	level = 3
+	tileStep := (1 << level) * 10
+	fmt.Println(tileStep)
 
 	covGDA94, err := cov.Transform(gda94)
 	if err != nil {
 		return nil, err
 	}
 
-	minX := int(covGDA94.BoundingBox.Min.X / 1e5)
-	minY := int(covGDA94.BoundingBox.Min.Y/1e5) - 1
-	maxX := int(covGDA94.BoundingBox.Max.X / 1e5)
-	maxY := int(covGDA94.BoundingBox.Max.Y/1e5) - 1
+	fmt.Println(covGDA94.BoundingBox)
+
+	minX := int(covGDA94.BoundingBox.Min.X / 1e4)
+	minY := int(covGDA94.BoundingBox.Min.Y / 1e4)
+	maxX := int(covGDA94.BoundingBox.Max.X / 1e4)
+	maxY := int(covGDA94.BoundingBox.Max.Y / 1e4)
+
+	x0 := (minX+190)/tileStep*tileStep - 190
+	x1 := (((maxX+190)/tileStep)+1)*tileStep - 190
+	y0 := (minY+110)/tileStep*tileStep - 110
+	y1 := (((maxY+110)/tileStep)-1)*tileStep - 110
+
+	fmt.Println(minX, maxX, minY, maxY)
+	fmt.Println(x0, x1, y0, y1)
+
+	for x := x0; x < x1; x += tileStep {
+		for y := y0; y > y1; y -= tileStep {
+			tileCov := proj4go.Coverage{BoundingBox: geo.BBox(float64(x)*1e4, float64(y)*1e4, float64(x+tileStep)*1e4, float64(y-tileStep)*1e4), Proj4: gda94}
+			fmt.Printf(tileName, x, y, level)
+			fmt.Println()
+			fmt.Println(tileCov.BoundingBox)
+			fName := fmt.Sprintf(tileName, x, y, level)
+			if _, err := os.Stat(fName); err != nil {
+				continue
+			}
+
+			data, _ := ioutil.ReadFile(fName)
+			cdata, _ := snappy.Decode(nil, data)
+
+			im := &scimage.GrayU8{Pix: cdata, Stride: 400, Rect: image.Rect(0, 0, 400, 400), Min: 0, Max: 100, NoData: 255}
+			rIn := &raster.Raster{im, tileCov}
+			rMerc.Warp(rIn)
+		}
+	}
+
+	return img.AsPaletted(scicolor.GradientNRGBAPalette(layer.Palette)), nil
+}
+
+/*
+	im, err := cog.DecodeLevelSubImage(rc, level, image.Rect(i0, j0, i1, j1))
+	rIn := &raster.Raster{im, proj4go.Coverage{BoundingBox: geo.BBox(x0, y0, x1, y1), Proj4: gda94}}
+
+	rMerc.Warp(rIn)
+	return img.AsPaletted(scicolor.GradientNRGBAPalette(layer.Palette)), nil
+}
+*/
+
+/*
 
 	for x := minX; x <= maxX; x++ {
 		for y := minY; y <= maxY; y++ {
@@ -98,3 +179,4 @@ func GenerateDEATile(layer Layer, width, height int, bbox geometry.BoundingBox, 
 	return img.AsPaletted(scicolor.GradientNRGBAPalette(layer.Palette)), nil
 
 }
+*/
