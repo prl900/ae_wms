@@ -31,31 +31,6 @@ const (
 	gda94    = "+proj=aea +lat_1=-18 +lat_2=-36 +lat_0=0 +lon_0=132 +x_0=0 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs "
 )
 
-func LocateTile(bbox geometry.BoundingBox, level int) []string {
-
-	minX := int(bbox.Min.X / 1e4)
-	minY := int(bbox.Min.Y / 1e4)
-	maxX := int(bbox.Max.X / 1e4)
-	maxY := int(bbox.Max.Y / 1e4)
-	tileStep := (1 << level) * 10
-
-	x0 := (minX+190)/tileStep*tileStep - 190
-	x1 := (((maxX+190)/tileStep)+1)*tileStep - 190
-	y0 := (minY+110)/tileStep*tileStep - 110
-	y1 := (((maxY+110)/tileStep)-1)*tileStep - 110
-
-	fmt.Println(x0, x1, y0, y1)
-	files := []string{}
-
-	for x := x0; x <= x1; x += tileStep {
-		for y := y0; y >= y1; y -= tileStep {
-			files = append(files, fmt.Sprintf(tileName, x, y, level))
-		}
-	}
-
-	return files
-}
-
 func GenerateDEATile(layer Layer, width, height int, bbox geometry.BoundingBox, date time.Time) (*image.Paletted, error) {
 	/*
 		ctx := context.Background()
@@ -106,8 +81,8 @@ func GenerateDEATile(layer Layer, width, height int, bbox geometry.BoundingBox, 
 
 	x0 := (minX+190)/tileStep*tileStep - 190
 	x1 := (((maxX+190)/tileStep)+1)*tileStep - 190
-	y0 := (minY+110)/tileStep*tileStep - 110
-	y1 := (((maxY+110)/tileStep)-1)*tileStep - 110
+	y0 := ((minY+100)/tileStep)*tileStep - 100
+	y1 := (((maxY+100)/tileStep)-1)*tileStep - 100
 
 	fmt.Println(minX, maxX, minY, maxY)
 	fmt.Println(x0, x1, y0, y1)
