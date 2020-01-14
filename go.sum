@@ -40,6 +40,8 @@ github.com/terrascope/raster v0.0.0-20190326091902-f6b8c84a42d1 h1:RdPBGY7gR6R/x
 github.com/terrascope/raster v0.0.0-20190326091902-f6b8c84a42d1/go.mod h1:tc5JSh4l6wL8/4qHIIOee6JRpH6wX+D8Zyvxi12FPrU=
 github.com/terrascope/scimage v0.0.0-20181114044706-c53eff7315e8 h1:ZJlI+4Ct17k2eO5/ZeB2jia3masO2ON3UnJ4diNuihc=
 github.com/terrascope/scimage v0.0.0-20181114044706-c53eff7315e8/go.mod h1:87f/46jMdJWq6Sulm2QTSVvnp4sgC5O3T0AoJQyZNr0=
+github.com/terrascope/scimage v0.0.0-20200114040216-519f26e36c04 h1:B5ePPajRmDpFav6GVgQO9Xu0t0a36ONY1bTtDBrK6yU=
+github.com/terrascope/scimage v0.0.0-20200114040216-519f26e36c04/go.mod h1:87f/46jMdJWq6Sulm2QTSVvnp4sgC5O3T0AoJQyZNr0=
 go.opencensus.io v0.21.0/go.mod h1:mSImk1erAIZhrmZN+AvHh14ztQfjbGwt4TtuofqLduU=
 go.opencensus.io v0.22.0 h1:C9hSCOW830chIVkdja34wa6Ky+IzWllkUinR+BtRZd4=
 go.opencensus.io v0.22.0/go.mod h1:+kGneAE2xo2IficOXnaByMWTGM9T73dGwxeWcUqIpI8=
