@@ -1,6 +1,7 @@
 package rastreader
 
 import (
+	"context"
 	"fmt"
 	"image"
 	"io/ioutil"
@@ -18,7 +19,6 @@ import (
 
 	"cloud.google.com/go/storage"
 	"github.com/golang/snappy"
-	"golang.org/x/net/context"
 )
 
 const (
