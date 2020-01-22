@@ -22,11 +22,11 @@ import (
 )
 
 const (
-	tileName = "dea/fc_metrics_maxPV_%+04d_%+04d_l%d_2001.snp"
+	tileName = "dea/fc_metrics_WCF_%+04d_%+04d_l%d_%d.snp"
 	gda94    = "+proj=aea +lat_1=-18 +lat_2=-36 +lat_0=0 +lon_0=132 +x_0=0 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs "
 )
 
-func WarpTile(x, y, level int, out *raster.Raster, wg *sync.WaitGroup) error {
+func WarpTile(x, y, level, year int, out *raster.Raster, wg *sync.WaitGroup) error {
 	defer wg.Done()
 
 	ctx := context.Background()
@@ -41,7 +41,7 @@ func WarpTile(x, y, level int, out *raster.Raster, wg *sync.WaitGroup) error {
 	tileCov := proj4go.Coverage{BoundingBox: geo.BBox(float64(x)*1e4, float64(y-tileStep)*1e4, float64(x+tileStep)*1e4, float64(y)*1e4), Proj4: gda94}
 	fmt.Println(tileCov)
 
-	objName := fmt.Sprintf(tileName, x, y, level)
+	objName := fmt.Sprintf(tileName, x, y, level, year)
 	fmt.Println(objName)
 	r, err := bkt.Object(objName).NewReader(ctx)
 	if err != nil {
@@ -82,11 +82,11 @@ func GenerateDEATile(layer Layer, width, height int, bbox geometry.BoundingBox, 
 	case res > 100:
 		level = 3
 	case res > 50:
-		level = 2
+		level = 3
 	case res > 25:
-		level = 1
+		level = 3
 	default:
-		level = 0
+		level = 3
 	}
 
 	tileStep := (1 << level)
@@ -111,7 +111,7 @@ func GenerateDEATile(layer Layer, width, height int, bbox geometry.BoundingBox, 
 	for x := x0; x <= x1; x += tileStep {
 		for y := y1; y >= y0; y -= tileStep {
 			wg.Add(1)
-			go WarpTile(x, y, level, rMerc, &wg)
+			go WarpTile(x, y, level, date.Year(), rMerc, &wg)
 		}
 	}
 

@@ -82,9 +82,24 @@ func wms(w http.ResponseWriter, r *http.Request) {
 
 	var t time.Time
 	if _, ok := params["time"]; ok {
+		contains := false
+		for _, d := range md[layer].Dates {
+			if d == params["time"][0] {
+				contains = true
+				break
+			}
+		}
+		if !contains {
+			http.Error(w, fmt.Sprintf("Malformed WMS GetMap request: %s in not defined in the server. Available dates are: %v", params["time"][0], md[layer].Dates), 400)
+			return
+		}
 		t, _ = time.Parse(time.RFC3339, params["time"][0])
 	} else {
 		t, err = time.Parse(time.RFC3339, md[layer].Dates[0])
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Could not parse date in metadata file %v", err), 500)
+			return
+		}
 	}
 
 	paletted, err := rastreader.GenerateTile(md[layer], int(width), int(height), bbox, t)
@@ -118,7 +133,6 @@ func ExecuteWriteTemplateFile(w io.Writer, data interface{}, filePath string) er
 }
 
 func main() {
-
 	if err := profiler.Start(profiler.Config{ProjectID: "wald-1526877012527", DebugLogging: true}); err != nil {
 		log.Fatal(err)
 	}
