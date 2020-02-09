@@ -15,9 +15,9 @@ L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
 
 //var wmsUrl = "https://dea-wms-dot-wald-1526877012527.appspot.com/wms"
 var wmsUrl = "https://dea-wms-dot-wald-1526877012527.appspot.com/wms"
-              https://dea-wms-dot-wald-1526877012527.appspot.com/
+
 var deaLayer = L.tileLayer.wms(wmsUrl, {
-    layers: 'dea',
+    layers: 'wcf',
     format: 'image/png',
     opacity: 0.7,
     transparent: true,

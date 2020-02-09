@@ -25,6 +25,7 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+	fmt.Println(md)
 }
 
 func wms(w http.ResponseWriter, r *http.Request) {
@@ -107,6 +108,9 @@ func wms(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("Layer not found %v", err), 400)
 		return
 	}
+
+	// Enable browser and intermediate caching
+	w.Header().Set("Cache-Control", "public, max-age:31536000")
 
 	err = png.Encode(w, paletted)
 	if err != nil {
