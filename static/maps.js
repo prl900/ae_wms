@@ -21,6 +21,9 @@ var deaLayer = L.tileLayer.wms(wmsUrl, {
     format: 'image/png',
     opacity: 0.7,
     transparent: true,
+    updateWhenIdle: true,
+    updateWhenZooming: false,
+    updateInterval: 500,
     attribution: '<a href="http://wald.anu.edu.au/">WALD ANU</a>'
 })
 	
