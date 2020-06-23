@@ -1,14 +1,13 @@
 package rastreader
 
 import (
-	"context"
 	"fmt"
 	"image"
 	"io/ioutil"
-	"log"
 	"math"
 	"sync"
 	"time"
+	"os"
 
 	"github.com/terrascope/geometry"
 	geo "github.com/terrascope/geometry"
@@ -17,7 +16,6 @@ import (
 	"github.com/terrascope/scimage"
 	"github.com/terrascope/scimage/scicolor"
 
-	"cloud.google.com/go/storage"
 	"github.com/golang/snappy"
 )
 
@@ -29,21 +27,13 @@ const (
 func WarpTile(x, y, level, year int, out *raster.Raster, wg *sync.WaitGroup) error {
 	defer wg.Done()
 
-	ctx := context.Background()
-	client, err := storage.NewClient(ctx)
-	if err != nil {
-		log.Fatalf("Failed to create client: %v", err)
-	}
-
-	bkt := client.Bucket(bucketName)
-
 	tileStep := (1 << level)
 	tileCov := proj4go.Coverage{BoundingBox: geo.BBox(float64(x)*1e4, float64(y-tileStep)*1e4, float64(x+tileStep)*1e4, float64(y)*1e4), Proj4: gda94}
 	fmt.Println(tileCov)
 
-	objName := fmt.Sprintf(tileName, x, y, level, year)
-	fmt.Println(objName)
-	r, err := bkt.Object(objName).NewReader(ctx)
+	fName := fmt.Sprintf(tileName, x, y, level, year)
+	fmt.Println(fName)
+	r, err := os.Open(fName)
 	if err != nil {
 		fmt.Println("Hmmm:", err)
 		return nil
@@ -52,12 +42,12 @@ func WarpTile(x, y, level, year int, out *raster.Raster, wg *sync.WaitGroup) err
 	cdata, err := ioutil.ReadAll(r)
 	r.Close()
 	if err != nil {
-		return fmt.Errorf("Error reading from object: %s object: %s: %v", bucketName, objName, err)
+		return fmt.Errorf("Error reading from object: %s object: %s: %v", fName, err)
 	}
 
 	data, err := snappy.Decode(nil, cdata)
 	if err != nil {
-		return fmt.Errorf("Error decompressing data: %s object: %s: %v", bucketName, objName, err)
+		return fmt.Errorf("Error decompressing data: %s object: %s: %v", fName, err)
 	}
 
 	im := &scimage.GrayU8{Pix: data, Stride: 400, Rect: image.Rect(0, 0, 400, 400), Min: 0, Max: 100, NoData: 255}

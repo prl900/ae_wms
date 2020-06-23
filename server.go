@@ -12,7 +12,6 @@ import (
 	"text/template"
 	"time"
 
-	"cloud.google.com/go/profiler"
 	"github.com/prl900/ae_wms/rastreader"
 	"github.com/terrascope/geometry"
 )
@@ -137,10 +136,6 @@ func ExecuteWriteTemplateFile(w io.Writer, data interface{}, filePath string) er
 }
 
 func main() {
-	if err := profiler.Start(profiler.Config{ProjectID: "wald-1526877012527", DebugLogging: true}); err != nil {
-		log.Fatal(err)
-	}
-
 	http.Handle("/", http.FileServer(http.Dir("./static")))
 	http.HandleFunc("/wms", wms)
 	log.Fatal(http.ListenAndServe(":8080", nil))
