@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	tileName = "dea/fc_metrics_WCF_%+04d_%+04d_l%d_%d.snp"
+	tileName = "/home/p_rozas_larraondo/data/fc_metrics_WCF_%+04d_%+04d_l%d_%d.snp"
 	gda94    = "+proj=aea +lat_1=-18 +lat_2=-36 +lat_0=0 +lon_0=132 +x_0=0 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs "
 )
 

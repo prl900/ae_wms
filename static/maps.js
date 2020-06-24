@@ -1,6 +1,6 @@
 var map = L.map('map', {
-    zoom: 8,
-    center: [-21., 149.],
+    zoom: 12,
+    center: [-37., 145.],
     //timeDimension: true,
     /*timeDimensionOptions: {
         timeInterval: "2001-01-01/2010-01-01",
@@ -14,7 +14,7 @@ L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
 }).addTo(map);
 
 //var wmsUrl = "https://dea-wms-dot-wald-1526877012527.appspot.com/wms"
-var wmsUrl = "https://dea-wms-dot-wald-1526877012527.appspot.com/wms"
+var wmsUrl = "http://35.244.111.168:8080/wms"
 
 var deaLayer = L.tileLayer.wms(wmsUrl, {
     layers: 'wcf',
