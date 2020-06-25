@@ -9,6 +9,7 @@ import (
 	"time"
 	"os"
 
+
 	"github.com/terrascope/geometry"
 	geo "github.com/terrascope/geometry"
 	"github.com/terrascope/proj4go"

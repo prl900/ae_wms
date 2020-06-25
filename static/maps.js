@@ -19,7 +19,7 @@ var wmsUrl = "http://35.244.111.168:8080/wms"
 var deaLayer = L.tileLayer.wms(wmsUrl, {
     layers: 'wcf',
     format: 'image/png',
-    opacity: 0.7,
+    opacity: 1.0,
     transparent: true,
     updateWhenIdle: true,
     updateWhenZooming: false,
