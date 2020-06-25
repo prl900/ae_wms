@@ -14,16 +14,11 @@ import (
 
 	"github.com/prl900/ae_wms/rastreader"
 	"github.com/terrascope/geometry"
-	"github.com/terrascope/scimage"
-	"github.com/terrascope/proj4go"
-
-	"github.com/golang/snappy"
 )
 
 var md rastreader.Layers
 
 func init() {
-	fmt.Println(scimage.GrayU8{}, proj4go.HALF_PI, snappy.magicBody)
 	var err error
 	md, err = rastreader.ReadLayers("metadata.json")
 	if err != nil {
