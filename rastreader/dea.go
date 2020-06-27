@@ -21,7 +21,8 @@ import (
 )
 
 const (
-	tileName = "/home/p_rozas_larraondo/data/fc_metrics_WCF_%+04d_%+04d_l%d_%d.snp"
+	//tileName = "/home/p_rozas_larraondo/data/fc_metrics_WCF_%+04d_%+04d_l%d_%d.snp"
+	tileName = "/home/p_rozas_larraondo/data/irr_water_%+04d_%+04d_l%d.snp"
 	gda94    = "+proj=aea +lat_1=-18 +lat_2=-36 +lat_0=0 +lon_0=132 +x_0=0 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs "
 )
 
@@ -36,7 +37,6 @@ func WarpTile(x, y, level, year int, out *raster.Raster, wg *sync.WaitGroup) err
 	fmt.Println(fName)
 	r, err := os.Open(fName)
 	if err != nil {
-		fmt.Println("Hmmm:", err)
 		return nil
 	}
 
@@ -51,7 +51,8 @@ func WarpTile(x, y, level, year int, out *raster.Raster, wg *sync.WaitGroup) err
 		return fmt.Errorf("Error decompressing data: %s object: %s: %v", fName, err)
 	}
 
-	im := &scimage.GrayU8{Pix: data, Stride: 400, Rect: image.Rect(0, 0, 400, 400), Min: 0, Max: 100, NoData: 255}
+	//im := &scimage.GrayU8{Pix: data, Stride: 400, Rect: image.Rect(0, 0, 400, 400), Min: 0, Max: 100, NoData: 255}
+	im := &scimage.GrayU8{Pix: data, Stride: 400, Rect: image.Rect(0, 0, 400, 400), Min: 1, Max: 4, NoData: 0}
 	rIn := &raster.Raster{im, tileCov}
 	out.Warp(rIn)
 
