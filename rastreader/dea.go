@@ -33,13 +33,15 @@ func WarpTile(x, y, level, year int, out *raster.Raster, wg *sync.WaitGroup) err
 	tileCov := proj4go.Coverage{BoundingBox: geo.BBox(float64(x)*1e4, float64(y-tileStep)*1e4, float64(x+tileStep)*1e4, float64(y)*1e4), Proj4: gda94}
 	fmt.Println(tileCov)
 
-	fName := fmt.Sprintf(tileName, x, y, level, year)
+	fName := fmt.Sprintf(tileName, x, y, level)
 	fmt.Println(fName)
 	r, err := os.Open(fName)
 	if err != nil {
+		fmt.Println(fName, ": not found")
 		return nil
 	}
 
+	fmt.Println("processing: ", fName)
 	cdata, err := ioutil.ReadAll(r)
 	r.Close()
 	if err != nil {
