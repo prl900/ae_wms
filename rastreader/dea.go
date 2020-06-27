@@ -80,7 +80,7 @@ func GenerateDEATile(layer Layer, width, height int, bbox geometry.BoundingBox, 
 	case res > 25:
 		level = 1
 	default:
-		level = 1
+		level = 0
 	}
 
 	tileStep := (1 << level)
