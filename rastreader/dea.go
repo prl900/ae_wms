@@ -63,16 +63,16 @@ func WarpTile(x, y, level, year int, out *raster.Raster, wg *sync.WaitGroup) err
 }
 
 func GenerateDEATile(layer Layer, width, height int, bbox geometry.BoundingBox, date time.Time) (*image.Paletted, error) {
-	img := scimage.NewGrayU8(image.Rect(0, 0, width, height), 0, 100, 255)
+	img := scimage.NewGrayU8(image.Rect(0, 0, width, height), 1, 4, 0)
 	cov := proj4go.Coverage{BoundingBox: bbox, Proj4: webMerc}
 	rMerc := &raster.Raster{Image: img, Coverage: cov}
 
 	var level int
 	switch res := rMerc.Resolution()[0]; {
 	case res > 400:
-		level = 5
+		level = 3
 	case res > 200:
-		level = 4
+		level = 3
 	case res > 100:
 		level = 3
 	case res > 50:
