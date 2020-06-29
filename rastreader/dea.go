@@ -3,6 +3,7 @@ package rastreader
 import (
 	"fmt"
 	"image"
+	"image/png"
 	"io/ioutil"
 	"math"
 	"sync"
@@ -57,7 +58,18 @@ func DrillTile(x, y, level int, poly geometry.Polygon, wg *sync.WaitGroup) error
 	im := &scimage.GrayU8{Pix: data, Stride: 400, Rect: image.Rect(0, 0, 400, 400), Min: 1, Max: 4, NoData: 0}
 	rIn := &raster.Raster{im, tileCov}
 
-	rIn.BurnPolygon(poly)
+	rIn.CropPolygon(poly)
+
+	out, err := os.Create(fName + ".png")
+        if err != nil {
+		return err
+        }
+
+	err = png.Encode(out, im)
+        if err != nil {
+		return err
+        }
+
 
 	return nil
 
