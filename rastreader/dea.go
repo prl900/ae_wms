@@ -75,6 +75,9 @@ func DrillDEA(layer Layer, bbox geometry.BoundingBox) (string, error) {
 	maxX := int(math.Ceil(covGDA94.BoundingBox.Max.X / 1e4))
 	maxY := int(math.Ceil(covGDA94.BoundingBox.Max.Y / 1e4))
 
+	level := 0
+	tileStep := (1 << level)
+
 	x0 := (minX+190)/tileStep*tileStep - 190
 	x1 := (maxX+190)/tileStep*tileStep - 190
 	y0 := (minY+100)/tileStep*tileStep - 100
