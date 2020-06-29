@@ -59,8 +59,10 @@ func DrillTile(x, y, level int, poly geometry.Polygon, wg *sync.WaitGroup) error
 	rIn := &raster.Raster{im, tileCov}
 
 	fmt.Println("before:", im.Mean())
+	fmt.Println("before:", im.Sum())
 	rIn.CropPolygon(poly)
 	fmt.Println("after:", im.Mean())
+	fmt.Println("after:", im.Sum())
 
 	out, err := os.Create(fName + ".png")
         if err != nil {
