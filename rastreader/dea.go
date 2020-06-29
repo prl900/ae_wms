@@ -58,7 +58,9 @@ func DrillTile(x, y, level int, poly geometry.Polygon, wg *sync.WaitGroup) error
 	im := &scimage.GrayU8{Pix: data, Stride: 400, Rect: image.Rect(0, 0, 400, 400), Min: 1, Max: 4, NoData: 0}
 	rIn := &raster.Raster{im, tileCov}
 
+	fmt.Println("before:", im.Mean())
 	rIn.CropPolygon(poly)
+	fmt.Println("after:", im.Mean())
 
 	out, err := os.Create(fName + ".png")
         if err != nil {
