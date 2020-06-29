@@ -62,6 +62,28 @@ func WarpTile(x, y, level, year int, out *raster.Raster, wg *sync.WaitGroup) err
 
 }
 
+func DrillDEA(layer Layer, bbox geometry.BoundingBox) (string, error) {
+
+	cov := proj4go.Coverage{BoundingBox: bbox, Proj4: geographic}
+	covGDA94, err := cov.Transform(gda94)
+	if err != nil {
+		return nil, err
+	}
+
+	minX := int(math.Floor(covGDA94.BoundingBox.Min.X / 1e4))
+	minY := int(math.Floor(covGDA94.BoundingBox.Min.Y / 1e4))
+	maxX := int(math.Ceil(covGDA94.BoundingBox.Max.X / 1e4))
+	maxY := int(math.Ceil(covGDA94.BoundingBox.Max.Y / 1e4))
+
+	x0 := (minX+190)/tileStep*tileStep - 190
+	x1 := (maxX+190)/tileStep*tileStep - 190
+	y0 := (minY+100)/tileStep*tileStep - 100
+	y1 := (maxY+100)/tileStep*tileStep - 100
+
+
+	return fmt.Sprintf("%d, %d, %d, %d", x0, x1, y0, y1), nil
+}
+
 func GenerateDEATile(layer Layer, width, height int, bbox geometry.BoundingBox, date time.Time) (*image.Paletted, error) {
 	img := scimage.NewGrayU8(image.Rect(0, 0, width, height), 1, 4, 0)
 	cov := proj4go.Coverage{BoundingBox: bbox, Proj4: webMerc}
