@@ -26,7 +26,7 @@ const (
 	gda94    = "+proj=aea +lat_1=-18 +lat_2=-36 +lat_0=0 +lon_0=132 +x_0=0 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs "
 )
 
-func DrillTile(x, y, level, poly geometry.Polygon, wg *sync.WaitGroup) error {
+func DrillTile(x, y, level int, poly geometry.Polygon, wg *sync.WaitGroup) error {
 	defer wg.Done()
 
 	tileStep := (1 << level)
@@ -68,7 +68,7 @@ func DrillDEA(layer Layer, poly geometry.Polygon) (string, error) {
 	cov := proj4go.Coverage{BoundingBox: poly.BoundingBox(), Proj4: geographic}
 	covGDA94, err := cov.Transform(gda94)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	minX := int(math.Floor(covGDA94.BoundingBox.Min.X / 1e4))
