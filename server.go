@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"image/png"
 	"io"
@@ -25,6 +26,33 @@ func init() {
 		panic(err)
 	}
 	fmt.Println(md)
+}
+
+func wps(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
+	log.Printf("%s", r.URL)
+
+	switch r.Method {
+	case "POST":
+		var p geometry.Polygon
+
+		err := json.NewDecoder(r.Body).Decode(&p)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		_, err = rastreader.DrillDEA(md["wcf"], p)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Error drilling polygon: %v", err), 400)
+			return
+		}
+
+		fmt.Fprintf(w, "Polygon: %+v", p)
+	default:
+		fmt.Fprintf(w, "Only POST method is supported.")
+	}
 }
 
 func wms(w http.ResponseWriter, r *http.Request) {
@@ -138,5 +166,6 @@ func ExecuteWriteTemplateFile(w io.Writer, data interface{}, filePath string) er
 func main() {
 	http.Handle("/", http.FileServer(http.Dir("./static")))
 	http.HandleFunc("/wms", wms)
+	http.HandleFunc("/wps", wps)
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
