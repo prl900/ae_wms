@@ -32,7 +32,12 @@ func DrillTile(x, y, level int, poly geometry.Polygon, wg *sync.WaitGroup) error
 
 	g := proj4go.ProjGeometry{&poly, geographic}
 	g, err := g.Transform(gda94)
-	fmt.Println("AAAA", g.Geometry.(*geometry.Polygon), err)
+	if err != nil {
+		fmt.Println("Error reprojecting tile")
+		return err
+	}
+
+	fmt.Println("AAAA", poly)
 	p := g.Geometry.(*geometry.Polygon)
 	fmt.Println("BBBB", *p)
 
