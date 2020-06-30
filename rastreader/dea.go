@@ -66,7 +66,7 @@ func DrillTile(x, y, level int, poly geometry.Polygon, wg *sync.WaitGroup) error
 
 	fmt.Println("before:", im.Mean())
 	fmt.Println("before:", im.Sum())
-	rIn.CropPolygon(poly)
+	rIn.CropPolygon(*p)
 	fmt.Println("after:", im.Mean())
 	fmt.Println("after:", im.Sum())
 
