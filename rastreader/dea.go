@@ -93,6 +93,7 @@ func DrillDEA(layer Layer, poly geometry.Polygon) (string, error) {
 	maxX := int(math.Ceil(covGDA94.BoundingBox.Max.X / 1e4))
 	maxY := int(math.Ceil(covGDA94.BoundingBox.Max.Y / 1e4))
 
+	fmt.Prinlnt("BBox:", minX, maxX, minY, maxY)
 	level := 0
 	tileStep := (1 << level)
 
@@ -100,6 +101,8 @@ func DrillDEA(layer Layer, poly geometry.Polygon) (string, error) {
 	x1 := (maxX+190)/tileStep*tileStep - 190
 	y0 := (minY+100)/tileStep*tileStep - 100
 	y1 := (maxY+100)/tileStep*tileStep - 100
+
+	fmt.Prinlnt("Tiles:", x0, x1, y0, y1)
 
 	g := proj4go.ProjGeometry{&poly, geographic}
 	g, err = g.Transform(gda94)
