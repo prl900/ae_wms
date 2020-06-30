@@ -27,19 +27,9 @@ const (
 	gda94    = "+proj=aea +lat_1=-18 +lat_2=-36 +lat_0=0 +lon_0=132 +x_0=0 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs "
 )
 
-func DrillTile(x, y, level int, poly geometry.Polygon, wg *sync.WaitGroup) error {
+func DrillTile(x, y, level int, poly *geometry.Polygon, wg *sync.WaitGroup) error {
 	defer wg.Done()
 
-	g := proj4go.ProjGeometry{&poly, geographic}
-	g, err := g.Transform(gda94)
-	if err != nil {
-		fmt.Println("Error reprojecting tile")
-		return err
-	}
-
-	fmt.Println("AAAA", poly)
-	p := g.Geometry.(*geometry.Polygon)
-	fmt.Println("BBBB", *p)
 
 	tileStep := (1 << level)
 	tileCov := proj4go.Coverage{BoundingBox: geo.BBox(float64(x)*1e4, float64(y-tileStep)*1e4, float64(x+tileStep)*1e4, float64(y)*1e4), Proj4: gda94}
@@ -71,7 +61,7 @@ func DrillTile(x, y, level int, poly geometry.Polygon, wg *sync.WaitGroup) error
 
 	fmt.Println("before:", im.Mean())
 	fmt.Println("before:", im.Sum())
-	rIn.CropPolygon(*p)
+	rIn.CropPolygon(*poly)
 	fmt.Println("after:", im.Mean())
 	fmt.Println("after:", im.Sum())
 
@@ -111,12 +101,21 @@ func DrillDEA(layer Layer, poly geometry.Polygon) (string, error) {
 	y0 := (minY+100)/tileStep*tileStep - 100
 	y1 := (maxY+100)/tileStep*tileStep - 100
 
+	g := proj4go.ProjGeometry{&poly, geographic}
+	g, err := g.Transform(gda94)
+	if err != nil {
+		fmt.Println("Error reprojecting tile")
+		return "", err
+	}
+
+	p := g.Geometry.(*geometry.Polygon)
+
 	var wg sync.WaitGroup
 
 	for x := x0; x <= x1; x += tileStep {
 		for y := y1; y >= y0; y -= tileStep {
 			wg.Add(1)
-			go DrillTile(x, y, level, poly, &wg)
+			go DrillTile(x, y, level, p, &wg)
 		}
 	}
 
