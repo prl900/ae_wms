@@ -102,7 +102,7 @@ func DrillDEA(layer Layer, poly geometry.Polygon) (string, error) {
 	y1 := (maxY+100)/tileStep*tileStep - 100
 
 	g := proj4go.ProjGeometry{&poly, geographic}
-	g, err := g.Transform(gda94)
+	g, err = g.Transform(gda94)
 	if err != nil {
 		fmt.Println("Error reprojecting tile")
 		return "", err
