@@ -30,7 +30,7 @@ const (
 func DrillTile(x, y, level int, poly geometry.Polygon, wg *sync.WaitGroup) error {
 	defer wg.Done()
 
-	g := proj4go.ProjGeometry{poly, geographic}
+	g := proj4go.ProjGeometry{&poly, geographic}
 	g, err := g.Transform(gda94)
 	fmt.Println("AAAA", g, err)
 
