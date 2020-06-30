@@ -32,7 +32,9 @@ func DrillTile(x, y, level int, poly geometry.Polygon, wg *sync.WaitGroup) error
 
 	g := proj4go.ProjGeometry{&poly, geographic}
 	g, err := g.Transform(gda94)
-	fmt.Println("AAAA", g, err)
+	fmt.Println("AAAA", g.Geometry.(*geometry.Polygon), err)
+	p := g.Geometry.(*geometry.Polygon)
+	fmt.Println("BBBB", *p)
 
 	tileStep := (1 << level)
 	tileCov := proj4go.Coverage{BoundingBox: geo.BBox(float64(x)*1e4, float64(y-tileStep)*1e4, float64(x+tileStep)*1e4, float64(y)*1e4), Proj4: gda94}
