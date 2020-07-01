@@ -27,7 +27,8 @@ const (
 	//tileName = "/home/p_rozas_larraondo/data/fc_metrics_WCF_%+04d_%+04d_l%d_%d.snp"
 	//tileName = "/home/p_rozas_larraondo/data/irr_water_%+04d_%+04d_l%d.snp"
 	bucketName = "wald-wms"
-	tileName = "irr_water_%+04d_%+04d_l%d.snp"
+	//tileName = "irr_water_%+04d_%+04d_l%d.snp"
+	tileName = "fc_metrics_WCF_%+04d_%+04d_l%d_%d.snp"
 )
 
 func DrillTile(x, y, level int, poly *geometry.Polygon, layer Layer, wg *sync.WaitGroup) (Stat, error) {
@@ -132,7 +133,7 @@ func WarpTile(x, y, level, year int, out *raster.Raster, layer Layer, wg *sync.W
 	tileStep := (1 << level)
 	tileCov := proj4go.Coverage{BoundingBox: geo.BBox(float64(x)*1e4, float64(y-tileStep)*1e4, float64(x+tileStep)*1e4, float64(y)*1e4), Proj4: layer.Proj4}
 
-	objName := fmt.Sprintf(tileName, x, y, level)
+	objName := fmt.Sprintf(tileName, x, y, level, 2001)
 	rc, err := bkt.Object(objName).NewReader(ctx)
 	if err != nil {
 		fmt.Println(objName, ": not found")
@@ -162,7 +163,7 @@ func WarpTile(x, y, level, year int, out *raster.Raster, layer Layer, wg *sync.W
 func GenerateDEATile(layer Layer, width, height int, bbox geometry.BoundingBox, date time.Time) (*image.Paletted, error) {
 
 
-	img := scimage.NewGrayU8(image.Rect(0, 0, width, height), 1, 4, 0)
+	img := scimage.NewGrayU8(image.Rect(0, 0, width, height), uint8(layer.MinVal), uint8(layer.MaxVal), uint8(layer.NoData))
 	cov := proj4go.Coverage{BoundingBox: bbox, Proj4: webMerc}
 	rMerc := &raster.Raster{Image: img, Coverage: cov}
 

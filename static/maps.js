@@ -1,6 +1,7 @@
 var map = L.map('map', {
     zoom: 12,
-    center: [-37., 145.],
+    //center: [-37., 145.],
+    center: [-29.46, 149.83],
     //timeDimension: true,
     /*timeDimensionOptions: {
         timeInterval: "2001-01-01/2010-01-01",
@@ -9,7 +10,9 @@ var map = L.map('map', {
     //timeDimensionControl: true,
 });
 
-L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+//L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+//L.tileLayer('http://tiles.wmflabs.org/hillshading/{z}/{x}/{y}.png', {
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}', {
     attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a>'
 }).addTo(map);
 
