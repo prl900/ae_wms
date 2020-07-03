@@ -89,7 +89,8 @@ func wms(w http.ResponseWriter, r *http.Request) {
 
 	bbox := geometry.BBox(pts[0], pts[1], pts[2], pts[3])
 
-	if bbox.Area() > 4e11 {
+	if bbox.Area() > 4e12 {
+		fmt.Println(bbox.Area())
 		http.Error(w, fmt.Sprintf("Too big area: %f", bbox.Area()), 413)
 		return
 	}

@@ -1,13 +1,13 @@
 var map = L.map('map', {
-    zoom: 12,
-    //center: [-37., 145.],
-    center: [-29.46, 149.83],
+    zoom: 8,
+    center: [-37., 145.],
+    //center: [-29.46, 149.83],
     //timeDimension: true,
     /*timeDimensionOptions: {
-        timeInterval: "2001-01-01/2010-01-01",
+        timeInterval: "2001-01-01/2003-01-01",
         period: "P1Y"
-    },*/
-    //timeDimensionControl: true,
+    },
+    timeDimensionControl: true,*/
 });
 
 //L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
@@ -32,6 +32,6 @@ var deaLayer = L.tileLayer.wms(wmsUrl, {
 	
 deaLayer.addTo(map);
 
-//var deaTimeLayer = L.timeDimension.layer.wms(deaLayer);
+//var deaTimeLayer = L.timeDimension.layer.wms(deaLayer, {cache:0, cacheForward:0, cacheBackward:0});
 //deaTimeLayer.addTo(map);
 
