@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"image/png"
@@ -43,13 +44,28 @@ func wps(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		_, err = rastreader.DrillDEA(md["wcf"], p)
+		records, err := rastreader.DrillDEA(md["wcf"], p)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Error drilling polygon: %v", err), 400)
 			return
 		}
+		ow := csv.NewWriter(w)
 
-		fmt.Fprintf(w, "Polygon: %+v", p)
+		for _, record := range records {
+			if err := ow.Write(record); err != nil {
+				http.Error(w, fmt.Sprintf("Error writing record to csv: %v", err), 400)
+				return
+			}
+		}
+
+		// Write any buffered data
+		ow.Flush()
+
+		if err := ow.Error(); err != nil {
+			http.Error(w, fmt.Sprintf("Error writing to csv: %v", err), 400)
+			return
+		}
+
 	default:
 		fmt.Fprintf(w, "Only POST method is supported.")
 	}
