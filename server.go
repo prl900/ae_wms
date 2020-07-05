@@ -58,7 +58,6 @@ func wps(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		// Write any buffered data
 		ow.Flush()
 
 		if err := ow.Error(); err != nil {

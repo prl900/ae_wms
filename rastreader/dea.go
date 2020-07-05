@@ -1,11 +1,12 @@
 package rastreader
 
 import (
+	"context"
 	"fmt"
 	"image"
 	"io/ioutil"
 	"math"
-	"sync"
+	//"sync"
 	"time"
 
 	"github.com/terrascope/geometry"
@@ -14,10 +15,10 @@ import (
 	"github.com/terrascope/scimage"
 	"github.com/terrascope/scimage/scicolor"
 
+	"cloud.google.com/go/storage"
 	"github.com/golang/snappy"
 
-	"cloud.google.com/go/storage"
-	"golang.org/x/net/context"
+	"golang.org/x/sync/errgroup"
 )
 
 const (
@@ -28,6 +29,7 @@ const (
 	tileName = "fc_metrics_WCF_%+04d_%+04d_l%d_%d.snp"
 )
 
+/*
 func DrillTile(ctx context.Context, x, y, year, level int, poly *geometry.Polygon, layer Layer, bkt *storage.BucketHandle, stats chan Stat) error {
 	stat := Stat{Year: year}
 
@@ -39,17 +41,20 @@ func DrillTile(ctx context.Context, x, y, year, level int, poly *geometry.Polygo
 	rc, err := bkt.Object(objName).NewReader(ctx)
 	if err != nil {
 		fmt.Println(objName, ": not found", err)
+		stats <- stat
 		return nil
 	}
 	defer rc.Close()
 
 	cdata, err := ioutil.ReadAll(rc)
 	if err != nil {
+		stats <- stat
 		return fmt.Errorf("Error reading from object: %s object: %s: %v", objName, err)
 	}
 
 	data, err := snappy.Decode(nil, cdata)
 	if err != nil {
+		stats <- stat
 		return fmt.Errorf("Error decompressing data: %s object: %s: %v", objName, err)
 	}
 
@@ -69,6 +74,7 @@ func DrillTile(ctx context.Context, x, y, year, level int, poly *geometry.Polygo
 
 	return nil
 }
+*/
 
 func DrillDEA(layer Layer, poly geometry.Polygon) ([][]string, error) {
 
@@ -112,14 +118,62 @@ func DrillDEA(layer Layer, poly geometry.Polygon) ([][]string, error) {
 
 	stats := make(chan Stat)
 	size := 0
+	grp, ctx := errgroup.WithContext(ctx)
 	for year := 2001; year <= 2010; year += 1 {
 		for x := x0; x <= x1; x += tileStep {
 			for y := y1; y >= y0; y -= tileStep {
 				size++
-				go DrillTile(ctx, x, y, year, level, p, layer, bkt, stats)
+				grp.Go(func() error {
+
+					tileStep := (1 << level)
+					tileCov := proj4go.Coverage{BoundingBox: geometry.BBox(float64(x)*1e4, float64(y-tileStep)*1e4, float64(x+tileStep)*1e4, float64(y)*1e4), Proj4: layer.Proj4}
+
+					objName := fmt.Sprintf(tileName, x, y, level, year)
+					rc, err := bkt.Object(objName).NewReader(ctx)
+					if err != nil {
+						stats <- Stat{Year: year}
+						return nil
+					}
+					defer rc.Close()
+
+					cdata, err := ioutil.ReadAll(rc)
+					if err != nil {
+						return err
+					}
+
+					data, err := snappy.Decode(nil, cdata)
+					if err != nil {
+						return err
+					}
+
+					im := &scimage.GrayU8{Pix: data, Stride: 400, Rect: image.Rect(0, 0, 400, 400), Min: uint8(layer.MinVal), Max: uint8(layer.MaxVal), NoData: uint8(layer.NoData)}
+					rIn := &raster.Raster{im, tileCov}
+
+					rIn.CropPolygon(*p)
+
+					stat := Stat{Year: year}
+					for _, val := range im.Pix {
+						if val != im.NoData {
+							stat.Sum += float64(val)
+							stat.Count += 1
+						}
+					}
+
+					select {
+					case stats <- stat:
+						return nil
+					case <-ctx.Done():
+						return ctx.Err()
+					}
+				})
 			}
 		}
 	}
+
+	go func() {
+		grp.Wait()
+		close(stats)
+	}()
 
 	yearStats := map[int]Stat{}
 	for i := 0; i < size; i++ {
@@ -130,7 +184,7 @@ func DrillDEA(layer Layer, poly geometry.Polygon) ([][]string, error) {
 			tmp.Count += stat.Count
 			yearStats[stat.Year] = tmp
 		case <-ctx.Done():
-			return out, ctx.Err()
+			return nil, ctx.Err()
 		}
 	}
 
@@ -138,9 +192,14 @@ func DrillDEA(layer Layer, poly geometry.Polygon) ([][]string, error) {
 		out = append(out, []string{string(year), fmt.Sprintf("%f", stat.Sum/stat.Count)})
 	}
 
+	if err := grp.Wait(); err != nil {
+		return nil, err
+	}
+
 	return out, nil
 }
 
+/*
 func WarpTile(ctx context.Context, x, y, level, year int, out *raster.Raster, layer Layer, bkt *storage.BucketHandle, wg *sync.WaitGroup) error {
 	defer wg.Done()
 
@@ -172,6 +231,7 @@ func WarpTile(ctx context.Context, x, y, level, year int, out *raster.Raster, la
 
 	return err
 }
+*/
 
 func GenerateDEATile(layer Layer, width, height int, bbox geometry.BoundingBox, date time.Time) (*image.Paletted, error) {
 
@@ -220,16 +280,41 @@ func GenerateDEATile(layer Layer, width, height int, bbox geometry.BoundingBox, 
 
 	bkt := client.Bucket(bucketName)
 
-	var wg sync.WaitGroup
-
+	grp, ctx := errgroup.WithContext(ctx)
 	for x := x0; x <= x1; x += tileStep {
 		for y := y1; y >= y0; y -= tileStep {
-			wg.Add(1)
-			go WarpTile(ctx, x, y, level, date.Year(), rMerc, layer, bkt, &wg)
+			grp.Go(func() error {
+				tileStep := (1 << level)
+				tileCov := proj4go.Coverage{BoundingBox: geometry.BBox(float64(x)*1e4, float64(y-tileStep)*1e4, float64(x+tileStep)*1e4, float64(y)*1e4), Proj4: layer.Proj4}
+
+				objName := fmt.Sprintf(tileName, x, y, level, date.Year)
+				rc, err := bkt.Object(objName).NewReader(ctx)
+				if err != nil {
+					return nil
+				}
+				defer rc.Close()
+
+				cdata, err := ioutil.ReadAll(rc)
+				if err != nil {
+					return err
+				}
+
+				data, err := snappy.Decode(nil, cdata)
+				if err != nil {
+					return err
+				}
+
+				im := &scimage.GrayU8{Pix: data, Stride: 400, Rect: image.Rect(0, 0, 400, 400), Min: uint8(layer.MinVal), Max: uint8(layer.MaxVal), NoData: uint8(layer.NoData)}
+				rIn := &raster.Raster{im, tileCov}
+
+				return rMerc.Warp(rIn)
+			})
 		}
 	}
 
-	wg.Wait()
+	if err := grp.Wait(); err != nil {
+		return nil, err
+	}
 
 	return img.AsPaletted(scicolor.GradientNRGBAPalette(layer.Palette)), nil
 }
