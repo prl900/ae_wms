@@ -8,6 +8,7 @@ import (
 	"math"
 	//"sync"
 	"time"
+	"strconv"
 
 	"github.com/terrascope/geometry"
 	"github.com/terrascope/proj4go"
@@ -91,7 +92,7 @@ func DrillDEA(layer Layer, poly geometry.Polygon) ([][]string, error) {
 	maxX := int(math.Ceil(covNat.BoundingBox.Max.X / 1e4))
 	maxY := int(math.Ceil(covNat.BoundingBox.Max.Y / 1e4))
 
-	level := 0
+	level := 1
 	tileStep := (1 << level)
 
 	x0 := (minX+190)/tileStep*tileStep - 190
@@ -123,6 +124,7 @@ func DrillDEA(layer Layer, poly geometry.Polygon) ([][]string, error) {
 		for x := x0; x <= x1; x += tileStep {
 			for y := y1; y >= y0; y -= tileStep {
 				size++
+				year, x, y := year, x, y
 				grp.Go(func() error {
 
 					tileStep := (1 << level)
@@ -188,8 +190,13 @@ func DrillDEA(layer Layer, poly geometry.Polygon) ([][]string, error) {
 		}
 	}
 
-	for year, stat := range yearStats {
-		out = append(out, []string{string(year), fmt.Sprintf("%f", stat.Sum/stat.Count)})
+	for year := 2001; year <= 2010; year += 1 {
+		stat := yearStats[year]
+		res := 0.0
+		if stat.Sum > 0 {
+			res = stat.Sum/stat.Count
+		}
+		out = append(out, []string{strconv.Itoa(year), fmt.Sprintf("%f", res)})
 	}
 
 	if err := grp.Wait(); err != nil {
@@ -283,11 +290,12 @@ func GenerateDEATile(layer Layer, width, height int, bbox geometry.BoundingBox, 
 	grp, ctx := errgroup.WithContext(ctx)
 	for x := x0; x <= x1; x += tileStep {
 		for y := y1; y >= y0; y -= tileStep {
+			x, y := x, y
 			grp.Go(func() error {
 				tileStep := (1 << level)
 				tileCov := proj4go.Coverage{BoundingBox: geometry.BBox(float64(x)*1e4, float64(y-tileStep)*1e4, float64(x+tileStep)*1e4, float64(y)*1e4), Proj4: layer.Proj4}
 
-				objName := fmt.Sprintf(tileName, x, y, level, date.Year)
+				objName := fmt.Sprintf(tileName, x, y, level, date.Year())
 				rc, err := bkt.Object(objName).NewReader(ctx)
 				if err != nil {
 					return nil
