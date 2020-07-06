@@ -29,9 +29,45 @@ var deaLayer = L.tileLayer.wms(wmsUrl, {
     updateInterval: 500,
     attribution: '<a href="http://wald.anu.edu.au/">WALD ANU</a>'
 })
-	
+var array = (new Array(10)).fill(0).map(function(_,ix){return 2001+ix;});
+
+var yearChanged = function(e){
+    console.log(e.target.value);
+    deaLayer.setParams({
+        time:e.target.value+'-01-01T00:00:00.000Z'
+    });
+};
+
+var YearControl = L.Control.extend({
+    onAdd: function(map) {
+        var dd = L.DomUtil.create('select');
+
+        dd.style.width = '200px';
+
+        for (var i = 0; i < array.length; i++) {
+            var option = document.createElement("option");
+            option.value = array[i];
+            option.text = array[i].toString();
+            dd.appendChild(option);
+        }
+        dd.addEventListener('input', yearChanged);
+        return dd;
+    },
+
+    onRemove: function(map) {
+        // Nothing to do here
+    }
+});
+
+var yearControl = function(opts){
+    return new YearControl(opts);
+};
+
 deaLayer.addTo(map);
+var yc = yearControl({
+    position:'topright'
+});
+yc.addTo(map);
 
 //var deaTimeLayer = L.timeDimension.layer.wms(deaLayer, {cache:0, cacheForward:0, cacheBackward:0});
 //deaTimeLayer.addTo(map);
-
