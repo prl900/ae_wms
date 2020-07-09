@@ -1,8 +1,8 @@
 package main
 
 import (
-	"encoding/csv"
-	"encoding/json"
+	//"encoding/csv"
+	//"encoding/json"
 	"fmt"
 	"image/png"
 	"io"
@@ -27,47 +27,6 @@ func init() {
 		panic(err)
 	}
 	fmt.Println(md)
-}
-
-func wps(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-
-	log.Printf("%s", r.URL)
-
-	switch r.Method {
-	case "POST":
-		var p geometry.Polygon
-
-		err := json.NewDecoder(r.Body).Decode(&p)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		records, err := rastreader.DrillDEA(md["wcf"], p)
-		if err != nil {
-			http.Error(w, fmt.Sprintf("Error drilling polygon: %v", err), 400)
-			return
-		}
-		ow := csv.NewWriter(w)
-
-		for _, record := range records {
-			if err := ow.Write(record); err != nil {
-				http.Error(w, fmt.Sprintf("Error writing record to csv: %v", err), 400)
-				return
-			}
-		}
-
-		ow.Flush()
-
-		if err := ow.Error(); err != nil {
-			http.Error(w, fmt.Sprintf("Error writing to csv: %v", err), 400)
-			return
-		}
-
-	default:
-		fmt.Fprintf(w, "Only POST method is supported.")
-	}
 }
 
 func wms(w http.ResponseWriter, r *http.Request) {
@@ -182,6 +141,5 @@ func ExecuteWriteTemplateFile(w io.Writer, data interface{}, filePath string) er
 func main() {
 	http.Handle("/", http.FileServer(http.Dir("./static")))
 	http.HandleFunc("/wms", wms)
-	http.HandleFunc("/wps", wps)
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

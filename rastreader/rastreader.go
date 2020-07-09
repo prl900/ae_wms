@@ -16,7 +16,7 @@ const (
 func GenerateTile(layer Layer, width, height int, bbox geometry.BoundingBox, date time.Time) (*image.Paletted, error) {
 
 	switch layer.Name {
-	case "WCF":
+	case "Kc":
 		return GenerateDEATile(layer, width, height, bbox, date)
 
 	default:
