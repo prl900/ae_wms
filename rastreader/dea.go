@@ -24,7 +24,7 @@ import (
 
 const (
 	bucketName = "wald-wms"
-	tileName   = "/home/prl900/Downloads/irr_data/irr_DEA_%+04d_%+04d_201702_l%d.png"
+	tileName   = "irr_DEA_%+04d_%+04d_201702_l%d.png"
 )
 
 func ComputeKc(im *image.NRGBA, layer Layer) (*scimage.GrayU8, error) {
@@ -42,7 +42,7 @@ func ComputeKc(im *image.NRGBA, layer Layer) (*scimage.GrayU8, error) {
 
 			kc := 0.680 * (1 - math.Exp(-14.12*math.Pow(evir, 2.482)-7.991*math.Pow(rmi, 0.890)))
 
-			out.SetGrayU8(i, j, scicolor.GrayU8{Y: uint8(kc * 255)})
+			out.SetGrayU8(i, j, scicolor.GrayU8{Y: uint8(kc * 100)})
 		}
 	}
 
@@ -79,16 +79,21 @@ func GenerateDEATile(layer Layer, width, height int, bbox geometry.BoundingBox, 
 	}
 
 	minX := int(math.Floor(covGDA94.BoundingBox.Min.X / 1e4))
-	minY := int(math.Floor(covGDA94.BoundingBox.Min.Y / 1e4))
-	maxX := int(math.Ceil(covGDA94.BoundingBox.Max.X / 1e4))
-	maxY := int(math.Ceil(covGDA94.BoundingBox.Max.Y / 1e4))
+        minY := int(math.Floor(covGDA94.BoundingBox.Min.Y / 1e4))
+        maxX := int(math.Ceil(covGDA94.BoundingBox.Max.X / 1e4))
+        maxY := int(math.Ceil(covGDA94.BoundingBox.Max.Y / 1e4))
 
-	x0 := (minX+190)/tileStep*tileStep - 190
-	x1 := (maxX+190)/tileStep*tileStep - 190
-	y0 := (minY+100)/tileStep*tileStep - 100
-	y1 := (maxY+100)/tileStep*tileStep - 100
+        x0, x1, y0, y1 := minX, maxX, minY, maxY
 
-	ctx := context.Background()
+        if tileStep > 1 {
+                x0 = (minX+190)/tileStep*tileStep - 190
+                x1 = (maxX+190)/tileStep*tileStep - 189
+                y0 = (minY+100)/tileStep*tileStep - 101
+                y1 = (maxY+100)/tileStep*tileStep - 100
+        }
+
+        ctx := context.Background()
+
 	client, err := storage.NewClient(ctx)
 	if err != nil {
 		return nil, err
@@ -97,13 +102,12 @@ func GenerateDEATile(layer Layer, width, height int, bbox geometry.BoundingBox, 
 	bkt := client.Bucket(bucketName)
 
 	grp, ctx := errgroup.WithContext(ctx)
-	for x := x0; x <= x1; x += tileStep {
-		for y := y1; y >= y0; y -= tileStep {
+	for x := x0; x < x1; x += tileStep {
+		for y := y1; y > y0; y -= tileStep {
 			x, y := x, y
 			grp.Go(func() error {
 				//objName := fmt.Sprintf(tileName, x, y, level, date.Year())
 				objName := fmt.Sprintf(tileName, x, y, level)
-				fmt.Println(objName)
 
 				rc, err := bkt.Object(objName).NewReader(ctx)
 				if err != nil {

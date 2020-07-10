@@ -16,6 +16,8 @@ import (
 
 	"github.com/prl900/ae_wms/rastreader"
 	"github.com/terrascope/geometry"
+
+	//_ "net/http/pprof"
 )
 
 var md rastreader.Layers
@@ -139,6 +141,12 @@ func ExecuteWriteTemplateFile(w io.Writer, data interface{}, filePath string) er
 }
 
 func main() {
+	/*
+	go func() {
+		log.Println(http.ListenAndServe(":6060", nil))
+	}()
+	*/
+
 	http.Handle("/", http.FileServer(http.Dir("./static")))
 	http.HandleFunc("/wms", wms)
 	log.Fatal(http.ListenAndServe(":8080", nil))
