@@ -27,6 +27,23 @@ const (
 	tileName   = "irr_DEA_%+04d_%+04d_201702_l%d.png"
 )
 
+func ComputeNDVI(im *image.NRGBA, layer Layer) (*scimage.GrayU8, error) {
+	out := scimage.NewGrayU8(im.Rect, uint8(layer.MinVal), uint8(layer.MaxVal), uint8(layer.NoData))
+
+	for i := 0; i < im.Bounds().Dx(); i++ {
+		for j := 0; j < im.Bounds().Dy(); j++ {
+			c := im.NRGBAAt(i, j)
+			red, _, nir, _ := float64(c.R)*2e-3, float64(c.G)*2e-3, float64(c.B)*2e-3, float64(c.A)*2e-3
+
+			ndvi := (nir - red) / (nir + red)
+
+			out.SetGrayU8(i, j, scicolor.GrayU8{Y: uint8(ndvi * 100)})
+		}
+	}
+
+	return out, nil
+}
+
 func ComputeKc(im *image.NRGBA, layer Layer) (*scimage.GrayU8, error) {
 	out := scimage.NewGrayU8(im.Rect, uint8(layer.MinVal), uint8(layer.MaxVal), uint8(layer.NoData))
 
@@ -135,7 +152,8 @@ func GenerateDEATile(layer Layer, width, height int, bbox geometry.BoundingBox, 
 					return nil
 				}
 
-				im, _ := ComputeKc(img.(*image.NRGBA), layer)
+				//im, _ := ComputeKc(img.(*image.NRGBA), layer)
+				im, _ := ComputeNDVI(img.(*image.NRGBA), layer)
 
 				tileStep := (1 << level)
 				tileCov := proj4go.Coverage{BoundingBox: geometry.BBox(float64(x)*1e4, float64(y-tileStep)*1e4, float64(x+tileStep)*1e4, float64(y)*1e4), Proj4: layer.Proj4}
