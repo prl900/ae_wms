@@ -1,13 +1,32 @@
+var WPS_URL='http://35.244.111.168:8080/wps';
+var geojson=null;
+
 var map = L.map('map', {
     zoom: 8,
     center: [-37., 145.],
-    //center: [-29.46, 149.83],
-    //timeDimension: true,
-    /*timeDimensionOptions: {
-        timeInterval: "2001-01-01/2003-01-01",
-        period: "P1Y"
-    },
-    timeDimensionControl: true,*/
+});
+
+// FeatureGroup is to store editable layers
+var drawnItems = new L.FeatureGroup();
+map.addLayer(drawnItems);
+var drawControl = new L.Control.Draw({
+    edit: {
+        featureGroup: drawnItems
+    }
+});
+map.addControl(drawControl);
+map.on(L.Draw.Event.CREATED, function (event) {
+    console.log(event);
+
+    var layer = event.layer;
+    drawnItems.clearLayers();
+    drawnItems.addLayer(layer);
+    geojson = layer.toGeoJSON().geometry;
+    $.post(
+        WPS_URL,
+        JSON.stringify(geojson),
+        function( result ) {console.log(result);}
+    );
 });
 
 //L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
