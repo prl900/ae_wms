@@ -30,53 +30,6 @@ const (
 	tileName = "fc_metrics_WCF_%+04d_%+04d_l%d_%d.snp"
 )
 
-/*
-func DrillTile(ctx context.Context, x, y, year, level int, poly *geometry.Polygon, layer Layer, bkt *storage.BucketHandle, stats chan Stat) error {
-	stat := Stat{Year: year}
-
-	tileStep := (1 << level)
-	tileCov := proj4go.Coverage{BoundingBox: geometry.BBox(float64(x)*1e4, float64(y-tileStep)*1e4, float64(x+tileStep)*1e4, float64(y)*1e4), Proj4: layer.Proj4}
-
-	objName := fmt.Sprintf(tileName, x, y, level, year)
-	fmt.Println(objName)
-	rc, err := bkt.Object(objName).NewReader(ctx)
-	if err != nil {
-		fmt.Println(objName, ": not found", err)
-		stats <- stat
-		return nil
-	}
-	defer rc.Close()
-
-	cdata, err := ioutil.ReadAll(rc)
-	if err != nil {
-		stats <- stat
-		return fmt.Errorf("Error reading from object: %s object: %s: %v", objName, err)
-	}
-
-	data, err := snappy.Decode(nil, cdata)
-	if err != nil {
-		stats <- stat
-		return fmt.Errorf("Error decompressing data: %s object: %s: %v", objName, err)
-	}
-
-	im := &scimage.GrayU8{Pix: data, Stride: 400, Rect: image.Rect(0, 0, 400, 400), Min: uint8(layer.MinVal), Max: uint8(layer.MaxVal), NoData: uint8(layer.NoData)}
-	rIn := &raster.Raster{im, tileCov}
-
-	rIn.CropPolygon(*poly)
-
-	for _, val := range im.Pix {
-		if val != im.NoData {
-			stat.Sum += float64(val)
-			stat.Count += 1
-		}
-	}
-
-	stats <- stat
-
-	return nil
-}
-*/
-
 func DrillDEA(layer Layer, poly geometry.Polygon) ([][]string, error) {
 
 	out := [][]string{}
@@ -109,6 +62,10 @@ func DrillDEA(layer Layer, poly geometry.Polygon) ([][]string, error) {
 
 	p := g.Geometry.(*geometry.Polygon)
 
+	if p.Area() > 2e11 {
+		return out, fmt.Errorf("Area is too large")
+	}
+
 	ctx := context.Background()
 	client, err := storage.NewClient(ctx)
 	if err != nil {
@@ -120,7 +77,7 @@ func DrillDEA(layer Layer, poly geometry.Polygon) ([][]string, error) {
 	stats := make(chan Stat)
 	size := 0
 	grp, ctx := errgroup.WithContext(ctx)
-	for year := 2001; year <= 2010; year += 1 {
+	for year := 2001; year <= 2019; year += 1 {
 		for x := x0; x <= x1; x += tileStep {
 			for y := y1; y >= y0; y -= tileStep {
 				size++
@@ -190,7 +147,7 @@ func DrillDEA(layer Layer, poly geometry.Polygon) ([][]string, error) {
 		}
 	}
 
-	for year := 2001; year <= 2010; year += 1 {
+	for year := 2001; year <= 2019; year += 1 {
 		stat := yearStats[year]
 		res := 0.0
 		if stat.Sum > 0 {
