@@ -4,6 +4,32 @@
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.2.0/leaflet.css" />
         <link rel="stylesheet" href="https://cdn.rawgit.com/socib/Leaflet.TimeDimension/master/dist/leaflet.timedimension.control.min.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/0.4.2/leaflet.draw.css"/>
+        <style>
+            #timeseries {
+                background:white;
+                width:3px;
+            }
+
+            #timeseries table {
+                width:100%;
+            }
+
+            table {
+                border-collapse: collapse;
+            }
+
+            td, th {
+                text-align: right;
+            }
+
+            td {
+                border-top: 1px solid grey;
+            }
+
+            td:first, th:first {
+                border-right: 1px solid grey;
+            }
+        </style>
     </head>
     <body>
         <div id="map" style="height: 100%; width: 100%"></div>

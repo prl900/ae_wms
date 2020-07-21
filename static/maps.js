@@ -25,8 +25,26 @@ map.on(L.Draw.Event.CREATED, function (event) {
     $.post(
         WPS_URL,
         JSON.stringify(geojson),
-        function( result ) {console.log(result);}
-    );
+        function( result ) {
+            console.log(result);
+            var $table = $('<table>');
+            $table.append('<thead>').children('thead')
+                .append('<tr />').children('tr').append('<th>Year</th><th>Value</th>');
+            var $tbody = $table.append('<tbody>').children('tbody');
+            var lines = result.split('\n');
+            lines.forEach(function(ln){
+                if(!ln){
+                    return;
+                }
+                var columns = ln.split(',');
+                $tbody.append('<tr />').children('tr').last().append(columns.map(function(c){
+                    return '<td>'+c+'</td>';
+                }));
+            });
+            $('#timeseries').children().remove();
+            $table.appendTo('#timeseries');
+
+        });
 });
 
 //L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
@@ -82,11 +100,32 @@ var yearControl = function(opts){
     return new YearControl(opts);
 };
 
+var TimeseriesTableControl = L.Control.extend({
+    onAdd: function(map) {
+        var dd = L.DomUtil.create('div');
+        dd.id="timeseries";
+        return dd;
+    },
+
+    onRemove: function(map) {
+        // Nothing to do here
+    }
+});
+
+var tsControl = function(opts){
+    return new TimeseriesTableControl(opts);
+}
+
 deaLayer.addTo(map);
 var yc = yearControl({
     position:'topright'
 });
 yc.addTo(map);
+
+var tsc = tsControl({
+    position:'bottomright'
+});
+tsc.addTo(map);
 
 //var deaTimeLayer = L.timeDimension.layer.wms(deaLayer, {cache:0, cacheForward:0, cacheBackward:0});
 //deaTimeLayer.addTo(map);
