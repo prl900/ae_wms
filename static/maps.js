@@ -66,7 +66,7 @@ var deaLayer = L.tileLayer.wms(wmsUrl, {
     updateInterval: 500,
     attribution: '<a href="http://wald.anu.edu.au/">WALD ANU</a>'
 })
-var array = (new Array(20)).fill(0).map(function(_,ix){return 2001+ix;});
+var array = (new Array(19)).fill(0).map(function(_,ix){return 2001+ix;});
 
 var yearChanged = function(e){
     console.log(e.target.value);
